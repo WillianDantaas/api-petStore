@@ -8,15 +8,15 @@ const Tutor = sequelize.define('Tutor', {
     autoIncrement: true,
     primaryKey: true,
   },
-  name: {
+  name: { // NOME COMPLETO
     type: DataTypes.STRING,
     allowNull: false,
   },
-  document: {
+  document: { // CPF
     type: DataTypes.STRING,
     allowNull: false,
   },
-  contact: {
+  contact: { // Telefone
     type: DataTypes.STRING,
     allowNull: false,
   },

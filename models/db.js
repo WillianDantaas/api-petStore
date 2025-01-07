@@ -1,7 +1,7 @@
 import { Sequelize } from 'sequelize';
 
 
-const sequelize = new Sequelize('petStorage', 'root', '', {
+const sequelize = new Sequelize('petstorage', 'root', '', {
     host: 'localhost',
     dialect: 'mysql',
     timezone: '-03:00'

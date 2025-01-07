@@ -1,4 +1,4 @@
-import { Sequelize, DataTypes } from 'sequelize';
+import { DataTypes } from 'sequelize';
 import sequelize from './db.js';  // Importando a instância do sequelize
 
 import Tutor from './tutor.js'; // Importar o modelo Tutor para relacionar
@@ -10,7 +10,7 @@ const Pet = sequelize.define('Pet', {
     autoIncrement: true,
     primaryKey: true,
   },
-  name: {
+  name: { // Nome
     type: DataTypes.STRING,
     allowNull: false,
   },
@@ -18,20 +18,20 @@ const Pet = sequelize.define('Pet', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  age: {
+  age: { // Idade
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  rg: {
+  rg: { // GERADO AUTOMATICAMENTE
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
   },
-  microchip: {
+  microchip: { // NUMERAÇÃO DO MICROSHIP SE TIVER
     type: DataTypes.STRING,
     allowNull: true,
   },
-  photo: {
+  photo: { // F
     type: DataTypes.STRING,
     allowNull: true,
   },
