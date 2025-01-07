@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import sequelize from './db.js'; // Caminho para o arquivo onde configurou o Sequelize
+import sequelize from '../config/dbconfig.js'; // Caminho para o arquivo onde configurou o Sequelize
 
 
 const Tutor = sequelize.define('Tutor', {

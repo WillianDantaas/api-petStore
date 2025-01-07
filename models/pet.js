@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import sequelize from './db.js';  // Importando a instância do sequelize
+import sequelize from '../config/dbconfig.js';  // Importando a instância do sequelize
 
 import Tutor from './tutor.js'; // Importar o modelo Tutor para relacionar
 

@@ -1,6 +1,6 @@
 import express, { Router, json, urlencoded } from 'express';
 import cors from 'cors';
-import sequelize from './models/db.js';
+import sequelize from './config/dbconfig.js';
 
 import authRoutes from './routes/authRoutes.js';
 import petRoutes from './routes/petRoutes.js';
