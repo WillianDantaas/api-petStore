@@ -1,0 +1,82 @@
+try {
+    db.query('SELECT * FROM users WHERE username = ?', [username], async (err, results) => {
+      if (err || results.length === 0) {
+        return res.status(401).json({ error: 'Usuário ou senha inválidos' });
+      }
+
+      const user = results[0];
+      const isPasswordValid = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordValid) {
+        return res.status(401).json({ error: 'Usuário ou senha inválidos' });
+      }
+
+      // Gerar o token de acesso
+      const accessToken = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: '1h' });
+
+      // Gerar o refresh token
+      const refreshToken = jwt.sign({ id: user.id }, REFRESH_SECRET, { expiresIn: '7d' });
+
+      // Armazenar o refresh token no banco de dados
+      db.query('UPDATE users SET refresh_token = ? WHERE id = ?', [refreshToken, user.id]);
+
+      res.status(200).json({ accessToken, refreshToken });
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro interno' });
+  }
+
+
+
+  exports.refreshToken = async (req, res) => {
+  const { refreshToken } = req.body;
+
+  if (!refreshToken) {
+    return res.status(403).json({ error: 'Refresh token não fornecido.' });
+  }
+
+  try {
+    // Verificar o refresh token no banco
+    db.query('SELECT * FROM users WHERE refresh_token = ?', [refreshToken], (err, results) => {
+      if (err || results.length === 0) {
+        return res.status(403).json({ error: 'Refresh token inválido.' });
+      }
+
+      const user = results[0];
+
+      // Verificar a validade do refresh token
+      jwt.verify(refreshToken, REFRESH_SECRET, (err, decoded) => {
+        if (err) {
+          return res.status(403).json({ error: 'Refresh token expirado.' });
+        }
+
+        // Gerar um novo token de acesso
+        const newAccessToken = jwt.sign({ id: user.id }, SECRET_KEY, { expiresIn: '1h' });
+
+        res.status(200).json({ accessToken: newAccessToken });
+      });
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro interno.' });
+  }
+};
+
+
+middleware
+
+module.exports = (req, res, next) => {
+  const token = req.headers.authorization;
+
+  if (!token) {
+    return res.status(401).json({ error: 'Token não fornecido.' });
+  }
+
+  jwt.verify(token, SECRET_KEY, (err, decoded) => {
+    if (err) {
+      return res.status(401).json({ error: 'Token inválido ou expirado.' });
+    }
+
+    req.userId = decoded.id;
+    next();
+  });
+};

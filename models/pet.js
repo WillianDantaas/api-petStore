@@ -1,16 +1,14 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../config/dbconfig.js';  // Importando a instância do sequelize
+import sequelize from '../config/dbconfig.js';  // Conexão do Sequelize
+import Tutor from './tutor.js'; // Importando o modelo Tutor
 
-import Tutor from './tutor.js'; // Importar o modelo Tutor para relacionar
-
-// Definindo o modelo Pet
 const Pet = sequelize.define('Pet', {
   id: {
     type: DataTypes.INTEGER,
     autoIncrement: true,
     primaryKey: true,
   },
-  name: { // Nome
+  name: {
     type: DataTypes.STRING,
     allowNull: false,
   },
@@ -18,20 +16,20 @@ const Pet = sequelize.define('Pet', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  age: { // Idade
+  age: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
-  rg: { // GERADO AUTOMATICAMENTE
+  rg: {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
   },
-  microchip: { // NUMERAÇÃO DO MICROSHIP SE TIVER
+  microchip: {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  photo: { // F
+  photo: {
     type: DataTypes.STRING,
     allowNull: true,
   },
@@ -47,7 +45,7 @@ const Pet = sequelize.define('Pet', {
   timestamps: true,
 });
 
-// Definindo o relacionamento entre Pet e Tutor
+// Relacionamento entre Pet e Tutor
 Pet.belongsTo(Tutor, { foreignKey: 'tutorId', as: 'tutor' });
 Tutor.hasMany(Pet, { foreignKey: 'tutorId', as: 'pets' });
 
