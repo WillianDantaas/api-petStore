@@ -1,7 +1,6 @@
 import express, { json, urlencoded } from 'express';
 import dotenv from 'dotenv';
 import sequelize from './config/dbconfig.js';  // Conexão do Sequelize
-import cors from 'cors';
 
 import authRoutes from './routes/authRoutes.js';
 import petRoutes from './routes/petRoutes.js';
@@ -30,10 +29,10 @@ async function syncDatabase() {
     console.log('Conexão com o Banco de Dados estabelecida com sucesso!');
 
     // Sincroniza os modelos separadamente
-    await Tutor.sync({ force: true, logging: console.log });
+    await Tutor.sync({ force: false, logging: console.log });
     // console.log('Tabela de Tutor criada com sucesso!');
 
-    await Pet.sync({ force: true, logging: console.log });
+    await Pet.sync({ force: false, logging: console.log });
     // console.log('Tabela de Pet criada com sucesso!');
     
     console.log('Tabelas criadas ou sincronizadas com sucesso!');

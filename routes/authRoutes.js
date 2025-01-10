@@ -46,9 +46,63 @@ authRoutes.post('/login', async (req, res) => {
 })
 
 // Rota para cadastro
-authRoutes.post('/register', (req, res) => {
-  
-})
+authRoutes.post('/register', async (req, res) => {
+  const {
+    name,
+    document,
+    email,
+    contact,
+    password,
+    address,
+    number,
+    complement,
+    neighborhood,
+    city,
+    state,
+    cep
+  } = req.body;
 
-// Exportar o router
+  try {
+    // Verificar se o tutor já existe pelo email
+    const existingTutor = await Tutor.findOne({ where: { email } });
+    if (existingTutor) {
+      return res.status(400).json({ error: 'Tutor já registrado com este email.' });
+    }
+
+    const existingTutorDocument = await Tutor.findOne({ where: { document } });
+    if (existingTutorDocument) {
+      return res.status(400).json({ error: 'Tutor já registrado com este documento.' });
+    }
+
+    // Criar um novo tutor
+    const newTutor = await Tutor.create({
+      name,
+      document,
+      email,
+      contact,
+      password,
+      address,
+      number,
+      complement,
+      neighborhood,
+      city,
+      state,
+      cep,
+    })
+
+    // Retornar uma resposta de sucesso
+    return res.status(201).json({
+      message: 'Tutor registrado com sucesso.',
+      tutor: {
+        id: newTutor.id,
+        name: newTutor.name,
+        email: newTutor.email,
+      },
+    });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ error: 'Erro interno do servidor.' });
+  }
+});
+
 export default authRoutes

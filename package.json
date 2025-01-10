@@ -11,6 +11,9 @@
     "sequelize-cli": "^6.6.2"
   },
   "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^5.0.0",
+    "@types/jsonwebtoken": "^9.0.7",
     "nodemon": "^3.1.9"
   },
   "name": "api-app-pet",
@@ -20,7 +23,7 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon ./app.js"
+    "start": "nodemon app.js"
   },
   "author": "Willian Dantas",
   "license": "ISC"
