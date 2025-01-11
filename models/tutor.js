@@ -59,8 +59,8 @@ const Tutor = sequelize.define('Tutor', {
     allowNull: false,
     validate: {
       set(value) {
-        if(!/^\d{9,}$/.test(value)) {
-          throw new Error('A senha deve conter no mínimo 9 dígitos numéricos')
+        if(!/^.{9,}$/.test(value)) {
+          throw new Error('A senha deve conter no mínimo 9 dígitos')
         }
       }
     }
@@ -152,6 +152,12 @@ const Tutor = sequelize.define('Tutor', {
           tutor.password = await bcrypt.hash(tutor.password, 10);
         }
       },
+      beforeUpdate: async (tutor) => {
+        if (tutor.password && tutor.changed('password')) {
+          tutor.password = await bcrypt.hash(tutor.password, 10);
+        }
+      },
+      
     },
   }
 );
