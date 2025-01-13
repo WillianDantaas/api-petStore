@@ -29,14 +29,14 @@ const Pet = sequelize.define('Pet', {
     type: DataTypes.STRING,
     allowNull: true,
   },
-  photo: {
+  image: {
     type: DataTypes.STRING,
     allowNull: true,
   },
   tutorId: {
     type: DataTypes.INTEGER,
     references: {
-      model: Tutor, // Relacionamento com o modelo Tutor
+      model: Tutor,
       key: 'id',
     },
   },

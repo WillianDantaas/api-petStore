@@ -1,0 +1,119 @@
+Cenário 1: Validação do Token no Back-end (Recomendado)
+O Front-end deve confiar na API para validar o token antes de mostrar o formulário. Isso evita que informações sensíveis fiquem expostas no cliente e assegura que o token realmente seja válido antes de prosseguir.
+
+Fluxo:
+O usuário clica no link com o token.
+O Front-end captura o token da URL e faz uma requisição GET ou POST para a API para validar o token:
+Envia o token no query param ou no body.
+O Back-end verifica se o token é válido (existente, não expirado, e associado a um usuário).
+O Back-end retorna:
+Sucesso: O Front-end exibe o formulário.
+Erro (token inválido ou expirado): O Front-end exibe uma mensagem de erro informando que o link não é válido ou expirou.
+Exemplo de validação no Front-end:
+
+javascript
+Copiar código
+import React, { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import axios from 'axios';
+
+const ResetPassword = () => {
+  const [searchParams] = useSearchParams();
+  const token = searchParams.get('token');
+  const [isValidToken, setIsValidToken] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const validateToken = async () => {
+      try {
+        const response = await axios.get(`/api/validate-reset-token?token=${token}`);
+        if (response.data.valid) {
+          setIsValidToken(true);
+        } else {
+          setError('O link de redefinição de senha é inválido ou expirou.');
+        }
+      } catch (err) {
+        setError('Erro ao validar o token.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    validateToken();
+  }, [token]);
+
+  if (loading) {
+    return <p>Carregando...</p>;
+  }
+
+  if (error) {
+    return <p>{error}</p>;
+  }
+
+  return (
+    <form>
+      {/* Exibir formulário de redefinição de senha */}
+    </form>
+  );
+};
+
+export default ResetPassword;
+Exemplo no Back-end (Validação de Token):
+
+javascript
+Copiar código
+app.get('/api/validate-reset-token', async (req, res) => {
+  const { token } = req.query;
+
+  try {
+    const decoded = jwt.verify(token, 'SEU_SECRET'); // Substitua 'SEU_SECRET' pela sua chave secreta
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({ valid: false });
+    }
+
+    res.status(200).json({ valid: true });
+  } catch (error) {
+    res.status(400).json({ valid: false });
+  }
+});
+
+
+Cenário 2: Não Validar o Token Antes de Mostrar o Formulário
+Outra abordagem, embora menos ideal, é não validar o token imediatamente e simplesmente exibir o formulário. O token será então validado no momento em que o usuário envia a nova senha.
+
+Fluxo:
+O Front-end captura o token e mostra o formulário sem fazer nenhuma validação inicial.
+Quando o usuário tenta redefinir a senha, o token e a nova senha são enviados ao Back-end.
+O Back-end valida o token e, se inválido, rejeita a solicitação com uma mensagem de erro.
+Pontos a Considerar:
+
+Pró: Experiência mais rápida para o usuário legítimo, pois o formulário aparece imediatamente.
+Contra: Um invasor ou usuário com um token expirado pode achar que o processo está funcionando, apenas para ser rejeitado no final, o que pode gerar confusão.
+Exemplo Simplificado no Front-end (Sem validação inicial):
+
+javascript
+Copiar código
+// Exibe o formulário diretamente, sem validar o token
+// Valida o token apenas ao enviar a nova senha
+Recomendações
+Priorize a validação no Back-end antes de mostrar o formulário.
+
+Evita a exposição do formulário para tokens inválidos/expirados.
+Garante uma experiência clara e evita confusão para o usuário.
+Sempre valide novamente no envio da nova senha.
+Mesmo que o token seja validado antes de exibir o formulário, você deve validar o token novamente no Back-end quando receber a nova senha.
+
+Ofereça feedback claro ao usuário.
+
+Se o token for inválido/expirado, mostre uma mensagem com instruções para solicitar um novo link.
+Exemplo de Mensagem para Usuário (Token Inválido ou Expirado)
+Se o token for inválido ou expirado, o Front-end pode exibir:
+
+html
+Copiar código
+<p>O link de redefinição de senha não é mais válido.</p>
+<p><a href="/forgot-password">Clique aqui</a> para solicitar um novo link.</p>
+Essa abordagem garante segurança e proporciona uma experiência amigável para o usuário.

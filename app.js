@@ -3,6 +3,7 @@ import dotenv from 'dotenv';
 import sequelize from './config/dbconfig.js';  // Conexão do Sequelize
 
 import authRoutes from './routes/authRoutes.js';
+import passRouter from './routes/passRouter.js';
 import petRoutes from './routes/petRoutes.js';
 
 import Tutor from './models/tutor.js';  // Importando o modelo Tutor
@@ -52,4 +53,5 @@ async function startServer() {
 startServer();  // Inicia o servidor após sincronizar o banco de dados
 
 app.use('/a', authRoutes);
+app.use('/r', passRouter)
 app.use('/p', petRoutes);

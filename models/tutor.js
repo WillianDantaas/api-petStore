@@ -129,6 +129,11 @@ const Tutor = sequelize.define('Tutor', {
     },
     // is: /^\d{5}-\d{3}$/, // Validação para o formato brasileiro de CEP
   },
+  petLimit: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 3,
+  },
   refresh_token: {
     type: DataTypes.STRING,
     allowNull: true,
