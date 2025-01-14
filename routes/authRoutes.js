@@ -1,8 +1,9 @@
 import express from 'express';
 
-import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import Tutor from '../models/tutor.js'
+
+import encryption from '../utils/encryption.js'
 
 
 const authRoutes = express.Router()
@@ -91,7 +92,7 @@ authRoutes.post('/login', async (req, res) => {
     }
 
     // Verificar se a senha fornecida é válida
-    const isPasswordValid = await bcrypt.compare(password, user.password);
+    const isPasswordValid = await encryption.comparePasswords(password, user.password);
 
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Usuário ou senha inválidos' });

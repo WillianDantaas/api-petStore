@@ -1,12 +1,11 @@
 import express from 'express';
 
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto'
+import tokens from '../utils/tokens.js'
 import Tutor from '../models/tutor.js'
 
-import sendEmail from '../utils/sendEmail.js';
+import sendMail from '../services/sendMail.js';
 
-import { sendResetPassMail } from '../utils/sendResetPassMail.js'
+import { sendResetPassMail } from '../templates/resetPassword.js'
 
 const passRouter = express.Router()
 
@@ -24,7 +23,7 @@ passRouter.post('/forgot-password', async (req, res) => {
             return res.status(404).json({ error: 'Usuário não encontrado' });
         }
 
-        const token = crypto.randomBytes(32).toString('hex');
+        const token = tokens.generateToken().toString('hex');
 
         const expiration = new Date();
         expiration.setMinutes(expiration.getMinutes() + 30); // Expira em 30 minutos
@@ -32,7 +31,7 @@ passRouter.post('/forgot-password', async (req, res) => {
 
         // Enviar e-mail com o link
         const resetLink = `http://localhost:8080/a/reset-password`;
-        await sendEmail(user.email, 'Redefinição de Senha',
+        await sendMail(user.email, 'Redefinição de Senha',
 
             sendResetPassMail(user.name, resetLink));
 

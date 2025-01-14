@@ -1,6 +1,6 @@
 import { DataTypes } from 'sequelize';
 import sequelize from '../config/dbconfig.js'; // Importando a instância do sequelize
-import bcrypt from 'bcryptjs';
+import encryption from '../utils/encryption.js'
 
 
 const Tutor = sequelize.define('Tutor', {
@@ -154,12 +154,12 @@ const Tutor = sequelize.define('Tutor', {
     hooks: {
       beforeCreate: async (tutor) => {
         if (tutor.password) {
-          tutor.password = await bcrypt.hash(tutor.password, 10);
+          tutor.password = await encryption.hashPassword(tutor.password);
         }
       },
       beforeUpdate: async (tutor) => {
         if (tutor.password && tutor.changed('password')) {
-          tutor.password = await bcrypt.hash(tutor.password, 10);
+          tutor.password = await encryption.hashPassword(tutor.password);
         }
       },
       

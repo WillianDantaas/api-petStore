@@ -1,4 +1,3 @@
-import { createTransport } from 'nodemailer';
 import nodemailer from 'nodemailer'
 
 const transporter = nodemailer.createTransport({
@@ -11,7 +10,7 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendEmail = async (to, subject, html) => {
+const sendMail = async (to, subject, html) => {
   try {
     await transporter.sendMail({
       from: process.env.EMAIL_USER, // Endereço de envio
@@ -26,4 +25,4 @@ const sendEmail = async (to, subject, html) => {
   }
 };
 
-export default sendEmail;
+export default sendMail;

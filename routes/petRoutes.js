@@ -1,44 +1,49 @@
 import express from 'express'
+import verifyToken from '../middlewares/verifyToken.js';
 
 // Table
 import Tutor from '../models/tutor.js';
+import Pet from '../models/pet.js';
 
 const petRoutes = express.Router()
 
-app.post('/pets', async (req, res) => {
-    const { name, breed, age, microchip, tutorId } = req.body;
-  
-    try {
-      const tutor = await Tutor.findByPk(tutorId);
-  
-      if (!tutor) {
-        return res.status(404).json({ error: 'Tutor não encontrado' });
-      }
-  
-      const petCount = await Pet.count({ where: { tutorId } });
-  
-      if (petCount >= tutor.petLimit) {
-        return res.status(400).json({ error: 'Limite de pets atingido' });
-      }
-  
-      // Timestamp atual + ID do tutor para garantir unicidade
-      const rg = `${Date.now()}${tutorId}`;
-      if(!microchip) {
-        microchip = null
-      }
-  
-      const newPet = await Pet.create({ name, breed, age, microchip, rg, tutorId });
-  
-      return res.status(201).json(newPet);
-    } catch (error) {
-      console.error('Erro ao criar pet:', error);
-      return res.status(500).json({ error: 'Erro interno do servidor' });
+petRoutes.post('/pets', verifyToken, async (req, res) => {
+  const { name, breed, age, microchip } = req.body;
+
+  try {
+    const tutorId = req.user.id
+
+    const tutor = await Tutor.findByPk(tutorId);
+    
+
+    if (!tutor) {
+      return res.status(404).json({ error: 'Tutor não encontrado' });
     }
-  });
+
+    const petCount = await Pet.count({ where: { tutorId } });
+
+    if (petCount >= tutor.petLimit) {
+      return res.status(400).json({ error: 'Limite de pets atingido' });
+    }
+
+    let rg;
+    do {
+      rg = Math.floor(10000000 + Math.random() * 90000000); // Gera número entre 10000000 e 99999999
+    } while (await Pet.findOne({ where: { rg } })); // Garante unicidade no DB
+
+    const newPet = await Pet.create({ name, breed, age, microchip, rg, tutorId });
+
+    return res.status(201).json(newPet);
+  } catch (error) {
+    console.error('Erro ao criar pet:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
   
 
 // Alterar limites de pets por tutor individualmente
-app.put('/tutors/:id/petLimit', async (req, res) => {
+petRoutes.put('/tutors/:id/petLimit', async (req, res) => {
     const { id } = req.params;
     const { petLimit } = req.body;
   
