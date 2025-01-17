@@ -1,4 +1,5 @@
 import express, { json, urlencoded } from 'express';
+import cors from 'cors'
 import dotenv from 'dotenv';
 import sequelize from './config/dbconfig.js';  // Conexão do Sequelize
 
@@ -15,6 +16,7 @@ const app = express();
 
 app.use(json());
 app.use(urlencoded({ extended: true }));
+app.use(cors())
 
 app.use((req, res, next) => {
   res.header("Access-Control-Allow-Origin", "*"); // Definir a URL que tem acesso à API
@@ -45,8 +47,8 @@ async function syncDatabase() {
 
 async function startServer() {
   await syncDatabase();  // Aguarda a sincronização
-  app.listen(8080, () => {
-    console.log('Servidor aberto na porta 8080');
+  app.listen(3000, () => {
+    console.log('Servidor aberto na porta 3000');
   });
 }
 

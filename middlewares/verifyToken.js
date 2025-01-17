@@ -3,6 +3,8 @@ import jwt from 'jsonwebtoken';
 const verifyToken = (req, res, next) => {
 
     const token = req.headers['authorization']?.split(' ')[1] // Remove prefixo Baerer
+
+    console.log('Token recebido:', token); // Adicione este log
     // Verifica se o token foi enviado
     if (!token) {
         return res.status(403).json({ error: 'Token de acesso necessário' });

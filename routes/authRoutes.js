@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import Tutor from '../models/tutor.js'
 
 import encryption from '../utils/encryption.js'
+import verifyToken from '../middlewares/verifyToken.js';
 
 
 const authRoutes = express.Router()
@@ -112,13 +113,18 @@ authRoutes.post('/login', async (req, res) => {
     }
 
     // Retornar os tokens para o cliente
-    return res.status(200).json({ accessToken, refreshToken });
+    return res.status(200).json({ accessToken, refreshToken, tutorID: user.id });
 
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro interno' });
   }
 })
+
+authRoutes.get('/verify-token', verifyToken, (req, res) => {
+  console.log('Token válido, usuário:', req.user);
+  res.json({ valid: true, user: req.user });
+});
 
 authRoutes.post('/logout', async (req, res) => {
   const authHeader = req.headers['authorization']; // Obtem o header Authorization
