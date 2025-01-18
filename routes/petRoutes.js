@@ -40,6 +40,28 @@ petRoutes.post('/pets', verifyToken, async (req, res) => {
   }
 });
 
+petRoutes.get('/pets', verifyToken, async (req, res) => {
+  try {
+    const tutorId = req.user.id
+
+    const tutor = await Tutor.findByPk(tutorId);
+    const pets = await Pet.findAll({ where: {tutorID: tutorId}})
+    
+
+    if (!tutor) {
+      return res.status(404).json({ error: 'Tutor não encontrado' });
+    }
+
+
+
+    return res.status(201).json(pets);
+  } catch (error) {
+    console.error('Erro ao consultar pets:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+
   
 
 // Alterar limites de pets por tutor individualmente
