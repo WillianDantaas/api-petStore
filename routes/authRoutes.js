@@ -1,81 +1,14 @@
 import express from 'express';
-
 import jwt from 'jsonwebtoken';
-import Tutor from '../models/tutor.js'
-
-import encryption from '../utils/encryption.js'
+import Tutor from '../models/tutor.js';
+import encryption from '../utils/encryption.js';
 import verifyToken from '../middlewares/verifyToken.js';
 
+const authRoutes = express.Router();
 
-const authRoutes = express.Router()
-
-// Rota para cadastro
-authRoutes.post('/register', async (req, res) => {
-  const {
-    name,
-    document,
-    email,
-    contact,
-    password,
-    address,
-    number,
-    complement,
-    neighborhood,
-    city,
-    state,
-    cep
-  } = req.body;
-
-  try {
-    // Verificar se o tutor já existe pelo email
-    const existingTutor = await Tutor.findOne({ where: { email } });
-    if (existingTutor) {
-      return res.status(400).json({ error: 'Tutor já registrado com este email.' });
-    }
-
-    const existingTutorDocument = await Tutor.findOne({ where: { document } });
-    if (existingTutorDocument) {
-      return res.status(400).json({ error: 'Tutor já registrado com este documento.' });
-    }
-
-    // Criar um novo tutor
-    const newTutor = await Tutor.create({
-      name,
-      document,
-      email,
-      contact,
-      password,
-      address,
-      number,
-      complement,
-      neighborhood,
-      city,
-      state,
-      cep,
-    })
-
-    // Retornar uma resposta de sucesso
-    return res.status(201).json({
-      message: 'Tutor registrado com sucesso.',
-      tutor: {
-        id: newTutor.id,
-        name: newTutor.name,
-        email: newTutor.email,
-      },
-    });
-  } catch (error) {
-
-    if (error.name === 'SequelizeValidationError') {
-      // Se for um erro de validação, extrai a mensagem do erro e repassa
-      const validationErrors = error.errors.map(err => err.message);
-      console.log(error)
-      return res.status(400).json({ errors: validationErrors });
-
-    }
-
-    return res.status(500).json({ error: 'Erro interno do servidor.' });
-  }
-});
+// Configuração dos tempos de expiração
+const ACCESS_TOKEN_EXPIRATION = '1m'; // Expiração mais longa para evitar renovações frequentes
+const REFRESH_TOKEN_EXPIRATION = '7d'; // Tempo de expiração do Refresh Token
 
 // Rota para login
 authRoutes.post('/login', async (req, res) => {
@@ -85,77 +18,33 @@ authRoutes.post('/login', async (req, res) => {
   }
 
   try {
-
-    const user = await Tutor.findOne({ where: { email: email } });
+    const user = await Tutor.findOne({ where: { email } });
 
     if (!user) {
       return res.status(401).json({ error: 'Usuário ou senha inválidos' });
     }
 
-    // Verificar se a senha fornecida é válida
     const isPasswordValid = await encryption.comparePasswords(password, user.password);
-
     if (!isPasswordValid) {
       return res.status(401).json({ error: 'Usuário ou senha inválidos' });
     }
 
-    // Gerar o token de acesso
-    const accessToken = jwt.sign({ id: user.id, user: user.user }, process.env.SECRET_KEY, { expiresIn: '1h' });
+    // Gerar tokens
+    const accessToken = jwt.sign({ id: user.id }, process.env.SECRET_KEY, { expiresIn: ACCESS_TOKEN_EXPIRATION });
+    let refreshToken = user.refresh_token;
 
-    // Gerar o refresh token
-    const refreshToken = jwt.sign({ id: user.id, user: user.user }, process.env.REFRESH_SECRET, { expiresIn: '7d' });
-
-    // Armazenar o refresh token no banco de dados
-    try {
+    // Se o usuário não tiver um refresh token ou ele expirou, cria um novo
+    if (!refreshToken) {
+      refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRATION });
       await user.update({ refresh_token: refreshToken });
-    } catch (error) {
-      return res.status(500).json({ error: 'Erro interno' })
     }
 
-    // Retornar os tokens para o cliente
     return res.status(200).json({ accessToken, refreshToken, tutorID: user.id });
-
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro interno' });
   }
-})
-
-authRoutes.get('/verify-token', verifyToken, (req, res) => {
-  console.log('Token válido, usuário:', req.user);
-  res.json({ valid: true, user: req.user });
 });
-
-authRoutes.post('/logout', async (req, res) => {
-  const authHeader = req.headers['authorization']; // Obtem o header Authorization
-  const token = authHeader && authHeader.split(' ')[1]; // Pega apenas o token (sem o Bearer)
-
-  if (!token) {
-    return res.status(401).json({ error: 'Token de autorização é obrigatório.' });
-  }
-
-  try {
-    // Valida o token
-    const decoded = jwt.verify(token, process.env.SECRET_KEY);
-
-    // Localiza o usuário pelo ID do token decodificado
-    const user = await Tutor.findOne({ where: { id: decoded.id } });
-
-    if (!user) {
-      return res.status(401).json({ error: 'Usuário não encontrado.' });
-    }
-
-    // Remove o refresh token do banco
-    await user.update({ refresh_token: null });
-
-    return res.status(200).json({ message: 'Logout realizado com sucesso.' });
-  } catch (err) {
-    if (err.name === 'TokenExpiredError') {
-      return res.status(403).json({ error: 'Token expirado. Faça login novamente.' });
-    }
-    return res.status(403).json({ error: 'Token inválido.' });
-  }
-})
 
 // Rota para renovar o token
 authRoutes.post('/refresh-token', async (req, res) => {
@@ -166,28 +55,62 @@ authRoutes.post('/refresh-token', async (req, res) => {
   }
 
   try {
-    // Verificar se o refresh token é válido
     const decoded = jwt.verify(refreshToken, process.env.REFRESH_SECRET);
-
-    // Buscar o usuário com base no ID armazenado no refresh token
     const user = await Tutor.findOne({ where: { id: decoded.id } });
 
     if (!user || user.refresh_token !== refreshToken) {
       return res.status(403).json({ error: 'Refresh token inválido ou expirado' });
     }
 
-    const newAccessToken = jwt.sign({ id: user.id }, process.env.SECRET_KEY, { expiresIn: '1h' });
+    // Verifica se é necessário atualizar o Refresh Token (opcional)
+    const now = Math.floor(Date.now() / 1000);
+    const refreshTokenExp = decoded.exp;
+    let newRefreshToken = refreshToken;
 
-    await user.update({ refreshToken: newAccessToken })
+    // Atualiza o refresh token apenas se faltarem menos de 24 horas para expirar
+    if (refreshTokenExp - now < 24 * 60 * 60) {
+      newRefreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRATION });
+      await user.update({ refresh_token: newRefreshToken });
+    }
 
-    return res.status(200).json({ accessToken: newAccessToken });
+    const newAccessToken = jwt.sign({ id: user.id }, process.env.SECRET_KEY, { expiresIn: ACCESS_TOKEN_EXPIRATION });
 
+    return res.status(200).json({
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    });
   } catch (err) {
-    console.error(err);
+    console.error('Erro ao verificar o refresh token:', err.message);
     res.status(403).json({ error: 'Erro ao renovar o token' });
   }
-})
+});
 
+// Rota para logout
+authRoutes.post('/logout', async (req, res) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
 
+  if (!token) {
+    return res.status(401).json({ error: 'Token de autorização é obrigatório.' });
+  }
 
-export default authRoutes
+  try {
+    const decoded = jwt.verify(token, process.env.SECRET_KEY);
+    const user = await Tutor.findOne({ where: { id: decoded.id } });
+
+    if (!user) {
+      return res.status(401).json({ error: 'Usuário não encontrado.' });
+    }
+
+    await user.update({ refresh_token: null });
+
+    return res.status(200).json({ message: 'Logout realizado com sucesso.' });
+  } catch (err) {
+    if (err.name === 'TokenExpiredError') {
+      return res.status(403).json({ error: 'Token expirado. Faça login novamente.' });
+    }
+    return res.status(403).json({ error: 'Token inválido.' });
+  }
+});
+
+export default authRoutes;

@@ -30,7 +30,7 @@ passRouter.post('/forgot-password', async (req, res) => {
         await user.update({ resetToken: token, resetTokenExpires: expiration });
 
         // Enviar e-mail com o link
-        const resetLink = `http://localhost:8080/a/reset-password`;
+        const resetLink = `http://localhost:8080/a/reset-password=${token}`;
         await sendMail(user.email, 'Redefinição de Senha',
 
             sendResetPassMail(user.name, resetLink));
