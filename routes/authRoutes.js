@@ -10,6 +10,59 @@ const authRoutes = express.Router();
 const ACCESS_TOKEN_EXPIRATION = '1m'; // Expiração mais longa para evitar renovações frequentes
 const REFRESH_TOKEN_EXPIRATION = '7d'; // Tempo de expiração do Refresh Token
 
+
+// Rota para cadastro
+authRoutes.post('/register', async (req, res) => {
+  const {
+    name,
+    email,
+    password,
+  } = req.body;
+
+  try {
+    // Verificar se o tutor já existe pelo email
+    const existingTutor = await Tutor.findOne({ where: { email } });
+    if (existingTutor) {
+      return res.status(400).json({ error: 'Tutor já registrado com este email.' });
+    }
+
+    // const existingTutorDocument = await Tutor.findOne({ where: { document } });
+    // if (existingTutorDocument) {
+    //   return res.status(400).json({ error: 'Tutor já registrado com este documento.' });
+    // }
+
+    // Criar um novo tutor
+    
+    const newTutor = await Tutor.create({
+      name,
+      email,
+      password,
+    })
+
+    // Retornar uma resposta de sucesso
+    return res.status(201).json({
+      message: 'Tutor registrado com sucesso.',
+      tutor: {
+        name: newTutor.name,
+        email: newTutor.email,
+      },
+    });
+  } catch (error) {
+
+    if (error.name === 'SequelizeValidationError') {
+      // Se for um erro de validação, extrai a mensagem do erro e repassa
+      const validationErrors = error.errors.map(err => err.message);
+      console.log(error)
+      return res.status(400).json({ errors: validationErrors });
+
+    }
+
+    return res.status(500).json({ error: 'Erro interno do servidor.' });
+  }
+});
+
+
+
 // Rota para login
 authRoutes.post('/login', async (req, res) => {
   const { email, password } = req.body;
