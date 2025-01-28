@@ -4,6 +4,14 @@ import Tutor from '../models/tutor.js';
 import encryption from '../utils/encryption.js';
 import verifyToken from '../middlewares/verifyToken.js';
 
+//Gerar tokens
+import tokens from '../utils/tokens.js'
+
+// Nodemailer
+import sendMail from '../services/sendMail.js';
+import { sendResetPassMail } from '../templates/resetPassword.js'
+import { sendConfirmMail } from '../templates/confirmMail.js'
+
 const authRoutes = express.Router();
 
 // Configuração dos tempos de expiração
@@ -32,12 +40,24 @@ authRoutes.post('/register', async (req, res) => {
     // }
 
     // Criar um novo tutor
-    
+
+    const confirmationToken = tokens.generateToken()
+    const dateNow = new Date()
+    const confirmationTokenExpires = new Date(dateNow.getTime() + 24 * 60 * 60 * 1000);
+
     const newTutor = await Tutor.create({
       name,
       email,
       password,
+      confirmationToken,
+      confirmationTokenExpires
     })
+
+    // Enviar e-mail com o link
+    const confirmLink = `${process.env.DOMAIN_FRONTEND}a/confirm-mail?token=${confirmationToken}`;
+
+    await sendMail(email, 'SirPet: Confirme seu Email',
+      sendConfirmMail(name, confirmLink));
 
     // Retornar uma resposta de sucesso
     return res.status(201).json({
@@ -57,11 +77,19 @@ authRoutes.post('/register', async (req, res) => {
 
     }
 
-    return res.status(500).json({ error: 'Erro interno do servidor.' });
+    return res.status(500).json({ error: 'Erro interno do servidor.'});
   }
 });
 
+// Confirmar email do cadastro
+authRoutes.post('/confirm-mail', async (req, res) => {
 
+  const { token } = req.query; // Extrai o token da URL
+  if (!token) {
+    return res.status(400).json({ error: 'Token não fornecido' });
+  }
+
+})
 
 // Rota para login
 authRoutes.post('/login', async (req, res) => {
@@ -165,5 +193,97 @@ authRoutes.post('/logout', async (req, res) => {
     return res.status(403).json({ error: 'Token inválido.' });
   }
 });
+
+
+// Alteração de Senha/Esqueci minha senha
+authRoutes.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'O campo email é obrigatório' });
+  }
+
+  try {
+    const user = await Tutor.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const token = tokens.generateToken();
+
+    const expiration = new Date();
+    expiration.setMinutes(expiration.getMinutes() + 30); // Expira em 30 minutos
+    await user.update({ resetToken: token, resetTokenExpires: expiration });
+
+    // Enviar e-mail com o link
+    const resetLink = `${process.env.DOMAIN_FRONTEND}a/reset-password?token=${token}`;
+    await sendMail(user.email, 'SirPet: Redefinição de Senha',
+
+      sendResetPassMail(user.name, resetLink));
+
+    return res.status(200).json({ message: 'E-mail enviado com sucesso!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao processar solicitação' });
+  }
+})
+
+// Confirmação do token de reset password
+authRoutes.get('/confirm', async (req, res) => {
+  const token = req.query.token;
+
+  // Validação inicial do token
+  if (!token) {
+    return res.status(400).json({ error: 'O token é obrigatório' });
+  }
+
+  try {
+    const user = await Tutor.findOne({ where: { resetToken: token } });
+
+    if (!user) {
+      return res.status(404).json({ error: 'Token inválido ou usuário não encontrado' });
+    }
+
+    return res.status(200).json({ success: true });
+  } catch (error) {
+    console.error('Erro ao confirmar token:', error);
+    return res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
+// redefinir senha
+authRoutes.post('/reset-password', async (req, res) => {
+  const { token, newPassword } = req.body; // A nova senha vem no corpo da requisição
+
+  try {
+    // Validação inicial
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'Token e nova senha são obrigatórios' });
+    }
+
+    // Verificar se o token existe e é válido
+    const user = await Tutor.findOne({ where: { resetToken: token } });
+
+    if (!user) {
+      return res.status(400).json({ error: 'Token inválido ou usuário não encontrado' });
+    }
+
+    // Verificar se o token expirou
+    if (user.resetTokenExpires < new Date()) {
+      return res.status(400).json({ error: 'O token expirou. Solicite uma nova redefinição de senha.' });
+    }
+
+    user.password = newPassword;
+    user.changed('password', true); // Força a marcação do campo como alterado
+    user.resetToken = null;
+    user.resetTokenExpires = null;
+    await user.save();
+
+    res.status(200).json({ message: 'Senha redefinida com sucesso!' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao processar solicitação' });
+  }
+})
 
 export default authRoutes;

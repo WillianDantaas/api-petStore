@@ -72,6 +72,18 @@ const Tutor = sequelize.define(
         },
       },
     },
+    isVerified: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    confirmationToken: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    confirmationTokenExpires: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
     address: {
       type: DataTypes.STRING,
       allowNull: true,

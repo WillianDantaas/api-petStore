@@ -1,6 +1,6 @@
 import format from "../utils/format.js"
 
-export function sendResetPassMail(username, resetLink) {
+export function sendConfirmMail(username, confirmLink) {
     return `<!DOCTYPE html>
     <html lang="pt">
     <head>
@@ -60,13 +60,13 @@ export function sendResetPassMail(username, resetLink) {
         <div class="header">
           <img src="https://elqseyu.stripocdn.email/content/guids/CABINET_dd354a98a803b60e2f0411e893c82f56/images/23891556799905703.png" alt="Logo">
         </div>
-        <h1 class="title">ESQUECEU SUA SENHA?</h1>
+        <h1 class="title">CONFIRME SEU EMAIL</h1>
         <p class="content">Olá, ${format.capitalizeName(username)},</p>
         <p class="content">
-          Houve uma solicitação para alterar sua senha!<br>
-          Se não fez este pedido, simplesmente ignore este email. Caso contrário, clique no botão abaixo para alterar sua senha:
+          Você acaba de se registrar no SirPet, desta forma, precisamos que confirme seu e-mail!<br>
+          Se não se registrou, simplesmente ignore este email. Caso contrário, clique no botão para confirmar seu e-mail:
         </p>
-        <a href="${resetLink}" class="button">Alterar Senha</a>
+        <a href="${confirmLink}" class="button">Confirmar Email</a>
         <p class="footer">
           Este é um e-mail automático. Por favor, não responda.
         </p>
