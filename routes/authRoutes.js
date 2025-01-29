@@ -11,6 +11,7 @@ import tokens from '../utils/tokens.js'
 import sendMail from '../services/sendMail.js';
 import { sendResetPassMail } from '../templates/resetPassword.js'
 import { sendConfirmMail } from '../templates/confirmMail.js'
+import { where } from 'sequelize';
 
 const authRoutes = express.Router();
 
@@ -43,7 +44,7 @@ authRoutes.post('/register', async (req, res) => {
 
     const confirmationToken = tokens.generateToken()
     const dateNow = new Date()
-    const confirmationTokenExpires = new Date(dateNow.getTime() + 24 * 60 * 60 * 1000);
+    const confirmationTokenExpires = dateNow.getTime() + 24 * 60 * 60 * 1000
 
     const newTutor = await Tutor.create({
       name,
@@ -77,7 +78,7 @@ authRoutes.post('/register', async (req, res) => {
 
     }
 
-    return res.status(500).json({ error: 'Erro interno do servidor.'});
+    return res.status(500).json({ error: 'Erro interno do servidor. ' + error });
   }
 });
 
@@ -89,6 +90,20 @@ authRoutes.post('/confirm-mail', async (req, res) => {
     return res.status(400).json({ error: 'Token não fornecido' });
   }
 
+  const user = await Tutor.findOne({ where: { confirmationToken: token } })
+
+  if (!user) {
+    return res.status(400).json({ success: false, message: 'Token inválido ou não encontrado.' });
+  }
+
+  if (user.confirmationTokenExpires < Date.now()) {
+    return res.status(400).json({ success: false, message: 'Token expirado.' });
+  }
+
+  user.isVerified = true
+  await user.save()
+
+  return res.json({ success: true, message: 'E-mail confirmado!' })
 })
 
 // Rota para login
