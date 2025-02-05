@@ -66,8 +66,8 @@ const Tutor = sequelize.define(
       allowNull: false,
       validate: {
         isMinLength(value) {
-          if (!/^.{9,}$/.test(value)) {
-            throw new Error('A senha deve conter no mínimo 9 dígitos');
+          if (!/^.{8,}$/.test(value)) {
+            throw new Error('A senha deve conter no mínimo 8 dígitos');
           }
         },
       },
@@ -164,6 +164,16 @@ const Tutor = sequelize.define(
       allowNull: true,
     },
     resetTokenExpires: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    // Novos campos para controle de tentativas e bloqueio
+    failedAttempts: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      allowNull: false,
+    },
+    lockedUntil: {
       type: DataTypes.DATE,
       allowNull: true,
     },

@@ -117,13 +117,38 @@ authRoutes.post('/login', async (req, res) => {
     const user = await Tutor.findOne({ where: { email } });
 
     if (!user) {
-      return res.status(401).json({ error: 'Usuário ou senha inválidos' });
+      return res.status(401).json({ error: 'Usuário não encontrado' });
+    }
+
+    // Verificar se o usuário está bloqueado
+    if (user.lockedUntil && user.lockedUntil > Date.now()) {
+      return res.status(403).json({
+        error: `Conta bloqueada até ${new Date(user.lockedUntil).toLocaleString()} devido a tentativas de login falhas`
+      });
     }
 
     const isPasswordValid = await encryption.comparePasswords(password, user.password);
     if (!isPasswordValid) {
+      // Incrementa as tentativas de login falhas
+      let failedAttempts = user.failedAttempts || 0;
+      failedAttempts++;
+
+      if (failedAttempts >= 3) {
+        const blockDuration = 30 * 1000; // Bloqueio de 30 segundos
+        const lockedUntil = Date.now() + blockDuration;
+        await user.update({
+          failedAttempts,
+          lockedUntil,
+        });
+        return res.status(403).json({ error: 'Conta bloqueada devido a múltiplas tentativas de login falhas' });
+      }
+
+      await user.update({ failedAttempts });
       return res.status(401).json({ error: 'Usuário ou senha inválidos' });
     }
+
+    // Resetar tentativas falhas após login bem-sucedido
+    await user.update({ failedAttempts: 0, lockedUntil: null });
 
     // Gerar tokens
     const accessToken = jwt.sign({ id: user.id }, process.env.SECRET_KEY, { expiresIn: ACCESS_TOKEN_EXPIRATION });
@@ -141,6 +166,7 @@ authRoutes.post('/login', async (req, res) => {
     res.status(500).json({ error: 'Erro interno' });
   }
 });
+
 
 // Rota para renovar o token
 authRoutes.post('/refresh-token', async (req, res) => {
