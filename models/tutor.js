@@ -67,7 +67,7 @@ const Tutor = sequelize.define(
       validate: {
         isMinLength(value) {
           if (!/^.{8,}$/.test(value)) {
-            throw new Error('A senha deve conter no mínimo 8 dígitos');
+            throw new Error('A senha deve conter no mínimo 8 díitos');
           }
         },
       },
@@ -167,13 +167,13 @@ const Tutor = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
-    // Novos campos para controle de tentativas e bloqueio
-    failedAttempts: {
+    // Novos campos para controle de tentativas e bloqueio relacionados à redefinição de senha
+    resetPasswordFailedAttempts: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
       allowNull: false,
     },
-    lockedUntil: {
+    resetPasswordLockedUntil: {  // Novo campo exclusivo para bloqueio de redefinição de senha
       type: DataTypes.DATE,
       allowNull: true,
     },
@@ -196,5 +196,26 @@ const Tutor = sequelize.define(
     },
   }
 );
+
+// Lógica para resetar tentativas e bloqueio de redefinição de senha ao passar o tempo
+Tutor.addHook('beforeSave', async (tutor) => {
+  if (tutor.resetPasswordFailedAttempts >= 3) {
+    // Verificar se o bloqueio ainda é válido (bloqueio de 15 minutos)
+    if (!tutor.resetPasswordLockedUntil || tutor.resetPasswordLockedUntil <= new Date()) {
+      tutor.resetPasswordFailedAttempts = 0; // Resetar tentativas após bloqueio de tempo
+      tutor.resetPasswordLockedUntil = null;
+    }
+  }
+});
+
+// Função para verificar o status de bloqueio de redefinição de senha
+Tutor.prototype.isResetPasswordLocked = function () {
+  if (this.resetPasswordFailedAttempts >= 3) {
+    if (this.resetPasswordLockedUntil && this.resetPasswordLockedUntil > new Date()) {
+      return true; // Está bloqueado
+    }
+  }
+  return false; // Não está bloqueado
+};
 
 export default Tutor;

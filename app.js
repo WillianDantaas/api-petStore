@@ -54,6 +54,6 @@ async function startServer() {
 
 startServer();  // Inicia o servidor após sincronizar o banco de dados
 
-app.use('/a', authRoutes);
+app.use('/auth', authRoutes);
 app.use('/r', passRouter)
 app.use('/p', petRoutes);

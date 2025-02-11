@@ -16,17 +16,13 @@ import { where } from 'sequelize';
 const authRoutes = express.Router();
 
 // Configuração dos tempos de expiração
-const ACCESS_TOKEN_EXPIRATION = '1m'; // Expiração mais longa para evitar renovações frequentes
+const ACCESS_TOKEN_EXPIRATION = '15m'; // Expiração mais longa para evitar renovações frequentes
 const REFRESH_TOKEN_EXPIRATION = '7d'; // Tempo de expiração do Refresh Token
 
 
 // Rota para cadastro
 authRoutes.post('/register', async (req, res) => {
-  const {
-    name,
-    email,
-    password,
-  } = req.body;
+  const { name, email, password } = req.body;
 
   try {
     // Verificar se o tutor já existe pelo email
@@ -35,30 +31,30 @@ authRoutes.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Tutor já registrado com este email.' });
     }
 
-    // const existingTutorDocument = await Tutor.findOne({ where: { document } });
-    // if (existingTutorDocument) {
-    //   return res.status(400).json({ error: 'Tutor já registrado com este documento.' });
-    // }
+    // Validação de senha forte
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    if (!passwordRegex.test(password)) {
+      return res.status(400).json({
+        error: 'A senha deve ter no mínimo 8 caracteres, incluindo uma letra maiúscula, uma letra minúscula, um número e um caractere especial.',
+      });
+    }
 
     // Criar um novo tutor
-
-    const confirmationToken = tokens.generateToken()
-    const dateNow = new Date()
-    const confirmationTokenExpires = dateNow.getTime() + 24 * 60 * 60 * 1000
+    const confirmationToken = tokens.generateToken();
+    const dateNow = new Date();
+    const confirmationTokenExpires = dateNow.getTime() + 24 * 60 * 60 * 1000;
 
     const newTutor = await Tutor.create({
       name,
       email,
       password,
       confirmationToken,
-      confirmationTokenExpires
-    })
+      confirmationTokenExpires,
+    });
 
     // Enviar e-mail com o link
     const confirmLink = `${process.env.DOMAIN_FRONTEND}a/confirm-mail?token=${confirmationToken}`;
-
-    await sendMail(email, 'SirPet: Confirme seu Email',
-      sendConfirmMail(name, confirmLink));
+    await sendMail(email, 'SirPet: Confirme seu Email', sendConfirmMail(name, confirmLink));
 
     // Retornar uma resposta de sucesso
     return res.status(201).json({
@@ -69,13 +65,11 @@ authRoutes.post('/register', async (req, res) => {
       },
     });
   } catch (error) {
-
     if (error.name === 'SequelizeValidationError') {
       // Se for um erro de validação, extrai a mensagem do erro e repassa
       const validationErrors = error.errors.map(err => err.message);
-      console.log(error)
+      console.log(error);
       return res.status(400).json({ errors: validationErrors });
-
     }
 
     return res.status(500).json({ error: 'Erro interno do servidor. ' + error });
@@ -246,28 +240,63 @@ authRoutes.post('/forgot-password', async (req, res) => {
 
   try {
     const user = await Tutor.findOne({ where: { email } });
+
     if (!user) {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
-    const token = tokens.generateToken();
+    // Verifica se o usuário está bloqueado para redefinir a senha
+    if (user.failedAttempts >= 3 && user.lockedUntil && new Date() < new Date(user.lockedUntil)) {
+      const lockTime = moment(user.lockedUntil).fromNow();
+      return res.status(429).json({ error: `Você excedeu o número de tentativas. Tente novamente em ${lockTime}.` });
+    }
 
+    // Verifica se o usuário fez muitas tentativas em um curto período
+    const now = new Date();
+    const timeWindow = 15 * 60 * 1000; // 15 minutos em milissegundos
+    const limit = 3; // Limite de tentativas
+    const resetRequests = user.resetRequests || []; // Lista das requisições de redefinição
+
+    // Filtra as requisições feitas nos últimos 15 minutos
+    const recentRequests = resetRequests.filter(request => now - new Date(request.timestamp) <= timeWindow);
+
+    if (recentRequests.length >= limit) {
+      const timeLeft = timeWindow - (now - new Date(recentRequests[0].timestamp));
+      const timeLeftMinutes = Math.ceil(timeLeft / 60000); // Tempo restante em minutos
+      return res.status(429).json({ error: `Limite de solicitações atingido. Tente novamente em ${timeLeftMinutes} minutos.` });
+    }
+
+    // Gerar token de redefinição
+    const token = tokens.generateToken();
     const expiration = new Date();
-    expiration.setMinutes(expiration.getMinutes() + 30); // Expira em 30 minutos
+    expiration.setMinutes(expiration.getMinutes() + 30); // Token expira em 30 minutos
+
+    // Atualiza o token e a data de expiração no banco
     await user.update({ resetToken: token, resetTokenExpires: expiration });
 
-    // Enviar e-mail com o link
-    const resetLink = `${process.env.DOMAIN_FRONTEND}a/reset-password?token=${token}`;
-    await sendMail(user.email, 'SirPet: Redefinição de Senha',
+    // Envia o link de redefinição de senha
+    const resetLink = `${process.env.DOMAIN_FRONTEND}auth/reset-password?token=${token}`;
+    await sendMail(user.email, 'SirPet: Redefinição de Senha', sendResetPassMail(user.name, resetLink));
 
-      sendResetPassMail(user.name, resetLink));
+    // Registra a requisição de redefinição no histórico
+    resetRequests.push({ timestamp: now });
+    await user.update({ resetRequests });
+
+    // Resetando o contador de tentativas falhas após uma solicitação válida
+    await user.update({ failedAttempts: 0 });
 
     return res.status(200).json({ message: 'E-mail enviado com sucesso!' });
+
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Erro ao processar solicitação' });
   }
-})
+});
+
+
+
+
+
 
 // Confirmação do token de reset password
 authRoutes.get('/confirm', async (req, res) => {
