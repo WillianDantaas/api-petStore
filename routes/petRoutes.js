@@ -174,5 +174,51 @@ petRoutes.put('/pets/:id', verifyToken, upload.single('image'), async (req, res)
 });
   
 
+/**
+ * DELETE /pets/:id
+ * Exclui o cadastro do Pet
+ */
+petRoutes.delete('/pets/:id', verifyToken, async (req, res) => {
+  const { id } = req.params;
+  try {
+    const pet = await Pet.findByPk(id);
+    if (!pet) {
+      return res.status(404).json({ error: 'Pet não encontrado' });
+    }
+    await pet.destroy();
+    return res.status(200).json({ message: 'Pet excluído com sucesso' });
+  } catch (error) {
+    console.error('Erro ao excluir pet:', error);
+    return res.status(500).json({ error: 'Erro interno no servidor' });
+  }
+});
+
+/**
+ * PATCH /pets/:id/death
+ * Informa o falecimento do Pet
+ */
+petRoutes.patch('/pets/:id/death', verifyToken, async (req, res) => {
+  const { id } = req.params;
+  const { deathDate } = req.body;
+  
+  if (!deathDate) {
+    return res.status(400).json({ error: 'Informe a data de falecimento do pet.' });
+  }
+  
+  try {
+    const pet = await Pet.findByPk(id);
+    if (!pet) {
+      return res.status(404).json({ error: 'Pet não encontrado' });
+    }
+    pet.isDeceased = true;
+    pet.deathDate = deathDate; // data informada pelo tutor
+    await pet.save();
+    return res.status(200).json({ message: 'Falecimento do pet informado com sucesso', pet });
+  } catch (error) {
+    console.error('Erro ao informar falecimento do pet:', error);
+    return res.status(500).json({ error: 'Erro interno no servidor' });
+  }
+});
+
 export default petRoutes
 

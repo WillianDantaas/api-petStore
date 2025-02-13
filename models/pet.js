@@ -69,6 +69,15 @@ const Pet = sequelize.define('Pet', {
       key: 'id',
     },
   },
+  isDeceased: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
+  deathDate: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
 }, {
   tableName: 'pets',
   timestamps: true,
