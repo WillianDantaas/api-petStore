@@ -2,15 +2,22 @@ import express, { json, urlencoded } from 'express';
 import cors from 'cors'
 import dotenv from 'dotenv';
 import sequelize from './config/dbconfig.js';  // Conexão do Sequelize
+dotenv.config();
 
+
+//Routes
 import authRoutes from './routes/authRoutes.js';
 import passRouter from './routes/passRouter.js';
 import petRoutes from './routes/petRoutes.js';
+import vaccinationRoutes from './routes/vaccinationRoutes.js';
+import medicalHistoryRoutes from './routes/medicalHistoryRoutes.js';
 
+//Models
 import Tutor from './models/tutor.js';  // Importando o modelo Tutor
 import Pet from './models/pet.js';  // Importando o modelo Pet
+import MedicalHistory from './models/MedicalHistory.js';
+import Vaccination from './models/Vaccination.js';
 
-dotenv.config();
 
 const app = express();
 
@@ -37,6 +44,13 @@ async function syncDatabase() {
 
     await Pet.sync({ force: false, logging: console.log });
     // console.log('Tabela de Pet criada com sucesso!');
+
+    // Sincroniza os modelos separadamente
+    await MedicalHistory.sync({ force: false, logging: console.log });
+    // console.log('Tabela de MedicalHistory criada com sucesso!');
+
+    await Vaccination.sync({ force: false, logging: console.log });
+    // console.log('Tabela de Vaccination criada com sucesso!');
     
     console.log('Tabelas criadas ou sincronizadas com sucesso!');
   } catch (error) {
@@ -54,6 +68,17 @@ async function startServer() {
 
 startServer();  // Inicia o servidor após sincronizar o banco de dados
 
+//Auth
 app.use('/auth', authRoutes);
+
+//Pass
 app.use('/r', passRouter)
+
+// Pet
 app.use('/p', petRoutes);
+
+// Vaccination
+app.use('', vaccinationRoutes);
+
+// MedicalHistoryRoutes
+app.use('', medicalHistoryRoutes);

@@ -7,31 +7,75 @@ import Pet from '../models/pet.js';
 
 const petRoutes = express.Router()
 
+// Registrar novo Pet
 petRoutes.post('/pets', verifyToken, async (req, res) => {
-  const { name, breed, age, microchip } = req.body;
+  // Extraindo os campos do corpo da requisição
+  const {
+    name,
+    species,
+    breed,
+    age,
+    sex,
+    weight,
+    color,
+    distinctiveMarks,
+    microchip,
+    image,
+    behavior,
+    observations
+  } = req.body;
+
+  // Validação dos campos obrigatórios
+  if (!name || !species || !breed || age === undefined || age === null || !sex) {
+    return res.status(400).json({
+      error: "Os campos 'name', 'species', 'breed', 'age' e 'sex' são obrigatórios."
+    });
+  }
+  
+  // Validação para garantir que a idade seja um número
+  if (isNaN(Number(age))) {
+    return res.status(400).json({
+      error: "O campo 'age' deve ser um número."
+    });
+  }
 
   try {
-    const tutorId = req.user.id
-
+    const tutorId = req.user.id;
     const tutor = await Tutor.findByPk(tutorId);
-    
 
     if (!tutor) {
       return res.status(404).json({ error: 'Tutor não encontrado' });
     }
 
+    // Verifica se o tutor atingiu o limite de pets
     const petCount = await Pet.count({ where: { tutorId } });
-
     if (petCount >= tutor.petLimit) {
       return res.status(400).json({ error: 'Limite de pets atingido' });
     }
 
+    // Geração de um número único para RG
     let rg;
     do {
-      rg = Math.floor(10000000 + Math.random() * 90000000); // Gera número entre 10000000 e 99999999
-    } while (await Pet.findOne({ where: { rg } })); // Garante unicidade no DB
+      rg = Math.floor(100000000 + Math.random() * 900000000);
+    } while (await Pet.findOne({ where: { rg } }));
 
-    const newPet = await Pet.create({ name, breed, age, microchip, rg, tutorId });
+    // Criação do novo pet com todos os campos
+    const newPet = await Pet.create({
+      name,
+      species,
+      breed,
+      age,
+      sex,
+      weight,
+      color,
+      distinctiveMarks,
+      microchip,
+      image,
+      behavior,
+      observations,
+      rg,
+      tutorId,
+    });
 
     return res.status(201).json(newPet);
   } catch (error) {
@@ -40,6 +84,7 @@ petRoutes.post('/pets', verifyToken, async (req, res) => {
   }
 });
 
+//consultar pets do tutor
 petRoutes.get('/pets', verifyToken, async (req, res) => {
   try {
     const tutorId = req.user.id
@@ -60,9 +105,6 @@ petRoutes.get('/pets', verifyToken, async (req, res) => {
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
-
-
-  
 
 // Alterar limites de pets por tutor individualmente
 petRoutes.put('/tutors/:id/petLimit', async (req, res) => {
