@@ -18,6 +18,12 @@ import Pet from './models/pet.js';  // Importando o modelo Pet
 import MedicalHistory from './models/MedicalHistory.js';
 import Vaccination from './models/Vaccination.js';
 
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// Definindo __filename e __dirname para ES Modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 
@@ -67,6 +73,8 @@ async function startServer() {
 }
 
 startServer();  // Inicia o servidor após sincronizar o banco de dados
+
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 //Auth
 app.use('/auth', authRoutes);
