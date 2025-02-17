@@ -21,8 +21,8 @@ const Pet = sequelize.define('Pet', {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  age: {
-    type: DataTypes.INTEGER,
+  birth_date: {
+    type: DataTypes.DATE,
     allowNull: false,
   },
   sex: {

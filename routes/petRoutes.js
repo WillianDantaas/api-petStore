@@ -17,7 +17,7 @@ petRoutes.post('/pets', verifyToken, upload.single('image'), async (req, res) =>
     name,
     species,
     breed,
-    age,
+    birth_date,
     sex,
     weight,
     color,
@@ -28,14 +28,29 @@ petRoutes.post('/pets', verifyToken, upload.single('image'), async (req, res) =>
   } = req.body;
 
   // Validação dos campos obrigatórios
-  if (!name || !species || !breed || age === undefined || age === null || !sex) {
-    return res.status(400).json({
-      error: "Os campos 'name', 'species', 'breed', 'age' e 'sex' são obrigatórios."
-    });
+  if (!name) {
+    return res.status(400).json({ error: "O campo 'name' é obrigatório." });
   }
-  if (isNaN(Number(age))) {
+  
+  if (!species) {
+    return res.status(400).json({ error: "O campo 'species' é obrigatório." });
+  }
+  
+  if (!breed) {
+    return res.status(400).json({ error: "O campo 'breed' é obrigatório." });
+  }
+  
+  if (birth_date === undefined || birth_date === null) {
+    return res.status(400).json({ error: "O campo 'birth_date' é obrigatório." });
+  }
+  
+  if (!sex) {
+    return res.status(400).json({ error: "O campo 'sex' é obrigatório." });
+  }
+  
+  if (isNaN(new Date(birth_date).getTime())) {
     return res.status(400).json({
-      error: "O campo 'age' deve ser um número."
+      error: "Data de nascimento deve ser uma Data válida."
     });
   }
 
@@ -66,7 +81,7 @@ petRoutes.post('/pets', verifyToken, upload.single('image'), async (req, res) =>
       name,
       species,
       breed,
-      age: Number(age),
+      birth_date: new Date(birth_date).getTime(),
       sex,
       weight: weight ? Number(weight) : null,
       color: color || null,
@@ -75,7 +90,7 @@ petRoutes.post('/pets', verifyToken, upload.single('image'), async (req, res) =>
       image: imagePath,
       behavior: behavior || null,
       observations: observations || null,
-      rg, // Inclua se você estiver usando a opção A
+      rg,
       tutorId,
     });
 
@@ -205,11 +220,17 @@ petRoutes.patch('/pets/:id/death', verifyToken, async (req, res) => {
     return res.status(400).json({ error: 'Informe a data de falecimento do pet.' });
   }
   
+
   try {
     const pet = await Pet.findByPk(id);
     if (!pet) {
-      return res.status(404).json({ error: 'Pet não encontrado' });
+      return res.status(404).json({ error: 'Pet não encontrado.' });
     }
+
+    if (pet.isDeceased) {
+      return res.status(409).json({error: 'Pet informado já falecido.'})
+    }
+
     pet.isDeceased = true;
     pet.deathDate = deathDate; // data informada pelo tutor
     await pet.save();
