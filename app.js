@@ -17,6 +17,7 @@ import Tutor from './models/tutor.js';  // Importando o modelo Tutor
 import Pet from './models/pet.js';  // Importando o modelo Pet
 import MedicalHistory from './models/MedicalHistory.js';
 import Vaccination from './models/Vaccination.js';
+import tutorLocation from './routes/tutorLocation.js';
 
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -78,6 +79,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 //Auth
 app.use('/auth', authRoutes);
+
+// Tutor Location
+app.use('/tutors', tutorLocation)
 
 //Pass
 app.use('/r', passRouter)

@@ -1,5 +1,5 @@
 import { DataTypes } from 'sequelize';
-import sequelize from '../config/dbconfig.js'; // Importando a instância do sequelize
+import sequelize from '../config/dbconfig.js'; // Instância do Sequelize
 import encryption from '../utils/encryption.js';
 
 const Tutor = sequelize.define(
@@ -24,10 +24,7 @@ const Tutor = sequelize.define(
       allowNull: true,
       validate: {
         validateIsdocument(value) {
-          if (value == null) {
-            return; // Permite null ou undefined
-          }
-
+          if (value == null) return;
           if (!/^\d{11}$/.test(value)) {
             throw new Error('O documento deve conter exatamente 11 dígitos numéricos');
           }
@@ -37,9 +34,7 @@ const Tutor = sequelize.define(
     email: {
       type: DataTypes.STRING,
       allowNull: false,
-      validate: {
-        isEmail: true, // Valida formato de e-mail
-      },
+      validate: { isEmail: true },
       set(value) {
         if (value) {
           this.setDataValue('email', value.toLowerCase());
@@ -50,14 +45,10 @@ const Tutor = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
       set(value) {
-        if (value == null) {
-          return; // Permite null ou undefined
-        }
-
+        if (value == null) return;
         if (!/^(\d{11})$/.test(value)) {
           throw new Error('Número de celular deve conter exatamente 11 dígitos numéricos contando o DDD');
         }
-
         this.setDataValue('contact', value.startsWith('+55') ? value : `+55${value}`);
       },
     },
@@ -67,7 +58,7 @@ const Tutor = sequelize.define(
       validate: {
         isMinLength(value) {
           if (!/^.{8,}$/.test(value)) {
-            throw new Error('A senha deve conter no mínimo 8 díitos');
+            throw new Error('A senha deve conter no mínimo 8 dígitos');
           }
         },
       },
@@ -135,7 +126,7 @@ const Tutor = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
       validate: {
-        is: /^[A-Za-z]{2}$/, // Aceita minúsculas e maiúsculas
+        is: /^[A-Za-z]{2}$/,
       },
       set(value) {
         if (value) {
@@ -147,7 +138,7 @@ const Tutor = sequelize.define(
       type: DataTypes.STRING,
       allowNull: true,
       validate: {
-        is: /^\d{8}$/, // Aceita apenas 8 dígitos
+        is: /^\d{8}$/,
       },
     },
     petLimit: {
@@ -167,20 +158,43 @@ const Tutor = sequelize.define(
       type: DataTypes.DATE,
       allowNull: true,
     },
-    // Novos campos para controle de tentativas e bloqueio relacionados à redefinição de senha
     resetPasswordFailedAttempts: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
       allowNull: false,
     },
-    resetPasswordLockedUntil: {  // Novo campo exclusivo para bloqueio de redefinição de senha
+    resetPasswordLockedUntil: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    latitude: {
+      type: DataTypes.DECIMAL(10, 8),
+      allowNull: true,
+    },
+    longitude: {
+      type: DataTypes.DECIMAL(11, 8),
+      allowNull: true,
+    },
+    is_premium: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    premium_plan: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    premium_start_date: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    premium_end_date: {
       type: DataTypes.DATE,
       allowNull: true,
     },
   },
   {
     sequelize,
-    tableName: 'tutors',
+    tableName: "tutors",
     timestamps: true,
     hooks: {
       beforeCreate: async (tutor) => {
@@ -189,7 +203,7 @@ const Tutor = sequelize.define(
         }
       },
       beforeUpdate: async (tutor) => {
-        if (tutor.password && tutor.changed('password')) {
+        if (tutor.password && tutor.changed("password")) {
           tutor.password = await encryption.hashPassword(tutor.password);
         }
       },
@@ -197,25 +211,23 @@ const Tutor = sequelize.define(
   }
 );
 
-// Lógica para resetar tentativas e bloqueio de redefinição de senha ao passar o tempo
-Tutor.addHook('beforeSave', async (tutor) => {
+// Reset de tentativas de redefinição de senha
+Tutor.addHook("beforeSave", async (tutor) => {
   if (tutor.resetPasswordFailedAttempts >= 3) {
-    // Verificar se o bloqueio ainda é válido (bloqueio de 15 minutos)
     if (!tutor.resetPasswordLockedUntil || tutor.resetPasswordLockedUntil <= new Date()) {
-      tutor.resetPasswordFailedAttempts = 0; // Resetar tentativas após bloqueio de tempo
+      tutor.resetPasswordFailedAttempts = 0;
       tutor.resetPasswordLockedUntil = null;
     }
   }
 });
 
-// Função para verificar o status de bloqueio de redefinição de senha
 Tutor.prototype.isResetPasswordLocked = function () {
   if (this.resetPasswordFailedAttempts >= 3) {
     if (this.resetPasswordLockedUntil && this.resetPasswordLockedUntil > new Date()) {
-      return true; // Está bloqueado
+      return true;
     }
   }
-  return false; // Não está bloqueado
+  return false;
 };
 
 export default Tutor;
