@@ -1,7 +1,7 @@
 // routes/tutorLocation.js
 import express from 'express';
 import Tutor from '../models/tutor.js';
-import { verifyToken } from '../middlewares/auth.js'; // Middleware para validar o token
+import verifyToken from '../middlewares/verifyToken.js'; // Middleware para validar o token
 
 const tutorLocation = express.Router();
 

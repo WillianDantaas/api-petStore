@@ -11,13 +11,13 @@ import passRouter from './routes/passRouter.js';
 import petRoutes from './routes/petRoutes.js';
 import vaccinationRoutes from './routes/vaccinationRoutes.js';
 import medicalHistoryRoutes from './routes/medicalHistoryRoutes.js';
+import tutorLocation from './routes/tutorLocation.js';
 
 //Models
 import Tutor from './models/tutor.js';  // Importando o modelo Tutor
 import Pet from './models/pet.js';  // Importando o modelo Pet
 import MedicalHistory from './models/MedicalHistory.js';
 import Vaccination from './models/Vaccination.js';
-import tutorLocation from './routes/tutorLocation.js';
 
 import path from 'path';
 import { fileURLToPath } from 'url';
