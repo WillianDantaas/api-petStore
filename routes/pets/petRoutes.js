@@ -2,12 +2,16 @@ import express from 'express'
 import path from 'path';
 
 // middlewares
-import verifyToken from '../middlewares/verifyToken.js';
-import upload from '../middlewares/multer.js';
+import verifyToken from '../../middlewares/verifyToken.js';
+import upload from '../../middlewares/multer.js';
 
 // Table
-import Tutor from '../models/tutor.js';
-import Pet from '../models/pet.js';
+import Tutor from '../../models/tutor.js';
+import Pet from '../../models/pet.js';
+
+
+
+import haversineDistance from '../../utils/haversineDistance.js';
 
 const petRoutes = express.Router()
 
@@ -241,66 +245,6 @@ petRoutes.patch('/pets/:id/death', verifyToken, async (req, res) => {
   }
 });
 
-
-/**
- * GET /lost
- * Rota para buscar pets perdidos com distância calculada
- */
-import { haversineDistance } from '../utils/haversineDistance.js';
-
-petRoutes.get('/lost', async (req, res) => {
-  const { user_latitude, user_longitude, max_distance = 2000 } = req.query; 
-  // `max_distance` agora está em METROS (padrão: 2000m = 2km)
-
-  if (!user_latitude || !user_longitude) {
-    return res.status(400).json({ message: 'Localização do usuário é obrigatória' });
-  }
-
-  try {
-    // Buscar apenas os pets que estão perdidos
-    const lostPets = await Pet.findAll({
-      where: { lost_alert_active: true },
-      attributes: [
-        'id',
-        'name',
-        'species',
-        'breed',
-        'image',
-        'alert_latitude',
-        'alert_longitude',
-        'lost_alert_triggered_at',
-      ],
-    });
-
-    // Calcular a distância e filtrar por distância máxima
-    const petsWithDistance = lostPets
-      .map((pet) => {
-        if (!pet.alert_latitude || !pet.alert_longitude) return null;
-
-        const distance = haversineDistance(
-          parseFloat(user_latitude),
-          parseFloat(user_longitude),
-          parseFloat(pet.alert_latitude),
-          parseFloat(pet.alert_longitude),
-          true // Sempre retorna em METROS
-        );
-
-        return {
-          ...pet.toJSON(),
-          distance: Math.round(distance), // Retorna sempre em metros, sem casas decimais
-        };
-      })
-      .filter((pet) => pet !== null && pet.distance <= parseFloat(max_distance)); // Filtra pets dentro do raio permitido
-
-    // Ordenar por distância (mais próximos primeiro)
-    petsWithDistance.sort((a, b) => a.distance - b.distance);
-
-    res.json(petsWithDistance);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ message: 'Erro ao buscar pets perdidos' });
-  }
-});
 
 
 

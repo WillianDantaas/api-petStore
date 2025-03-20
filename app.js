@@ -4,14 +4,18 @@ import dotenv from 'dotenv';
 import sequelize from './config/dbconfig.js';  // Conexão do Sequelize
 dotenv.config();
 
-
-//Routes
+//Tutors Routes
 import authRoutes from './routes/authRoutes.js';
 import passRouter from './routes/passRouter.js';
-import petRoutes from './routes/petRoutes.js';
+import tutorLocation from './routes/tutorLocation.js';
+
+// Pets Routes
+import petRoutes from './routes/pets/petRoutes.js';
+import alertPets from './routes/pets/alertPets.js';
+
+// Pets Screen
 import vaccinationRoutes from './routes/vaccinationRoutes.js';
 import medicalHistoryRoutes from './routes/medicalHistoryRoutes.js';
-import tutorLocation from './routes/tutorLocation.js';
 
 //Models
 import Tutor from './models/tutor.js';  // Importando o modelo Tutor
@@ -87,7 +91,8 @@ app.use('/tutors', tutorLocation)
 app.use('/r', passRouter)
 
 // Pet
-app.use('/p', petRoutes);
+app.use('', petRoutes);
+app.use('', alertPets)
 
 // Vaccination
 app.use('', vaccinationRoutes);
