@@ -123,7 +123,6 @@ authRoutes.post('/login', async (req, res) => {
 
     const isPasswordValid = await encryption.comparePasswords(password, user.password);
     if (!isPasswordValid) {
-      // Incrementa as tentativas de login falhas
       let failedAttempts = user.failedAttempts || 0;
       failedAttempts++;
 
@@ -144,15 +143,25 @@ authRoutes.post('/login', async (req, res) => {
     // Resetar tentativas falhas após login bem-sucedido
     await user.update({ failedAttempts: 0, lockedUntil: null });
 
-    // Gerar tokens
+    // Gerar um novo accessToken
     const accessToken = jwt.sign({ id: user.id }, process.env.SECRET_KEY, { expiresIn: ACCESS_TOKEN_EXPIRATION });
+
     let refreshToken = user.refresh_token;
 
-    // Se o usuário não tiver um refresh token ou ele expirou, cria um novo
+    // Se o usuário não tiver um refreshToken ou ele for inválido/expirado, gera um novo
     if (!refreshToken) {
       refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRATION });
-      await user.update({ refresh_token: refreshToken });
+    } else {
+      try {
+        jwt.verify(refreshToken, process.env.REFRESH_SECRET); // Verifica se é válido
+      } catch (err) {
+        // Se expirado ou inválido, gera um novo
+        refreshToken = jwt.sign({ id: user.id }, process.env.REFRESH_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRATION });
+      }
     }
+
+    // Atualizar o refreshToken no banco de dados
+    await user.update({ refresh_token: refreshToken });
 
     return res.status(200).json({ accessToken, refreshToken, tutorID: user.id });
   } catch (err) {
