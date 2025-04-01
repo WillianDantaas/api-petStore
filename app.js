@@ -9,6 +9,9 @@ import authRoutes from './routes/authRoutes.js';
 import passRouter from './routes/passRouter.js';
 import tutorLocation from './routes/tutorLocation.js';
 
+//Posts Routes
+import postsRoutes from './routes/posts/postsRoutes.js'
+
 // Pets Routes
 import petRoutes from './routes/pets/petRoutes.js';
 import alertPets from './routes/pets/alertPets.js';
@@ -22,6 +25,10 @@ import Tutor from './models/tutor.js';  // Importando o modelo Tutor
 import Pet from './models/pet.js';  // Importando o modelo Pet
 import MedicalHistory from './models/MedicalHistory.js';
 import Vaccination from './models/Vaccination.js';
+import Comment from './models/posts/comment.js';
+import Post from './models/posts/post.js';
+import { PostLike, CommentLike } from './models/posts/postLike.js';
+import Share from './models/posts/share.js';
 
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -49,19 +56,19 @@ async function syncDatabase() {
     await sequelize.authenticate();
     console.log('Conexão com o Banco de Dados estabelecida com sucesso!');
 
-    // Sincroniza os modelos separadamente
-    await Tutor.sync({ force: false, logging: console.log });
-    // console.log('Tabela de Tutor criada com sucesso!');
+    // Sincronize as tabelas na ordem correta
+    await Tutor.sync({ force: false, logging: console.log });  // Primeiro os tutores
+    await Post.sync({ force: false, logging: console.log });   // Depois as postagens (post)
+    await Share.sync({ force: false, logging: console.log });  // Depois as compartilhadas
 
-    await Pet.sync({ force: false, logging: console.log });
-    // console.log('Tabela de Pet criada com sucesso!');
+    await Pet.sync({ force: false, logging: console.log });  // Pets
+    await MedicalHistory.sync({ force: false, logging: console.log });  // Histórico médico
+    await Vaccination.sync({ force: false, logging: console.log });  // Vacinas
 
-    // Sincroniza os modelos separadamente
-    await MedicalHistory.sync({ force: false, logging: console.log });
-    // console.log('Tabela de MedicalHistory criada com sucesso!');
-
-    await Vaccination.sync({ force: false, logging: console.log });
-    // console.log('Tabela de Vaccination criada com sucesso!');
+    // Só depois as tabelas que dependem de outras (comentários, curtidas)
+    await Comment.sync({ force: false, logging: console.log });  // Comentários
+    await PostLike.sync({ force: false, logging: console.log });  // Curtidas de posts
+    await CommentLike.sync({ force: false, logging: console.log });  // Curtidas de comentários
     
     console.log('Tabelas criadas ou sincronizadas com sucesso!');
   } catch (error) {
@@ -77,7 +84,6 @@ async function startServer() {
   });
 }
 
-startServer();  // Inicia o servidor após sincronizar o banco de dados
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -99,3 +105,8 @@ app.use('', vaccinationRoutes);
 
 // MedicalHistoryRoutes
 app.use('', medicalHistoryRoutes);
+
+// Posts
+app.use('/api/posts', postsRoutes);
+
+startServer();

@@ -3,7 +3,7 @@ import path from 'path';
 
 // middlewares
 import verifyToken from '../../middlewares/verifyToken.js';
-import upload from '../../middlewares/multer.js';
+import upload from '../../middlewares/uploadMiddleware.js';
 
 // Table
 import Tutor from '../../models/tutor.js';
