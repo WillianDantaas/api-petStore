@@ -6,29 +6,41 @@ const postsController = {
   // Criar um novo post
   async createPost(req, res) {
     try {
-        const { content, tutorId } = req.body;
+      const { content } = req.body;
+      const tutorId = req.user.id; // Pegando do token via middleware verifyToken
 
-        if (!content || !tutorId) {
-            return res.status(400).json({ error: 'Conteúdo e tutorId são obrigatórios' });
-        }
+      if (!content) {
+        return res.status(400).json({ error: "O conteúdo é obrigatório." });
+      }
 
-        // Verifica se há um arquivo de mídia no upload
-        let media_url = null;
-        let media_type = null;
+      if (!req.file) {
+        return res.status(400).json({ error: "A mídia (imagem ou vídeo) é obrigatória." });
+      }
 
-        if (req.file) {
-            const folder = req.file.mimetype.startsWith('image') ? 'images' : 'media';
-            media_url = `/uploads/${folder}/${req.file.filename}`;
-            media_type = req.file.mimetype.startsWith('image') ? 'image' : 'video';
-        }
+      console.log("📌 Arquivo recebido:", req.file); // Verifica se o multer está funcionando
+      console.log("📌 Conteúdo recebido:", req.body);
 
-        const newPost = await Post.create({ content, media_url, media_type, tutorId });
+      // Define caminho e tipo da mídia
+      const folder = req.file.mimetype.startsWith("image") ? "images" : "media";
+      const media_url = `/uploads/${folder}/${req.file.filename}`;
+      const media_type = req.file.mimetype.startsWith("image") ? "image" : "video";
 
-        res.status(201).json(newPost);
+      console.log("📌 Salvando post com:", { content, media_url, media_type, tutorId });
+
+      // Criando o post no banco de dados
+      const newPost = await Post.create({
+        content,
+        media_url,
+        media_type,
+        tutorId
+      });
+
+      return res.status(201).json(newPost);
     } catch (error) {
-        res.status(500).json({ error: 'Erro ao criar post', details: error.message });
+      console.error("❌ Erro ao criar post:", error);
+      return res.status(500).json({ error: "Erro ao criar post", details: error.message });
     }
-},
+  },
 
 
   // Listar todos os posts
@@ -70,12 +82,13 @@ const postsController = {
       const post = await Post.findByPk(id);
       if (!post) return res.status(404).json({ error: 'Post não encontrado' });
 
-      // Atualiza o conteúdo se foi fornecido
+      // Atualiza o conteúdo, se fornecido
       post.content = content || post.content;
 
-      // Verifica se há um novo arquivo de mídia
+      // Se houver novo arquivo de mídia, atualiza a mídia usando a mesma lógica do create
       if (req.file) {
-        post.media_url = `/uploads/${req.file.filename}`;
+        const folder = req.file.mimetype.startsWith('image') ? 'images' : 'media';
+        post.media_url = `/uploads/${folder}/${req.file.filename}`;
         post.media_type = req.file.mimetype.startsWith('image') ? 'image' : 'video';
       }
 

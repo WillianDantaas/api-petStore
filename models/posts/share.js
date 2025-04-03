@@ -1,10 +1,10 @@
-import { DataTypes } from 'sequelize';
-import sequelize from '../../config/dbconfig.js';
-import Tutor from '../tutor.js';
-import Post from './post.js';
+import { DataTypes } from "sequelize";
+import sequelize from "../../config/dbconfig.js";
+import Tutor from "../tutor.js";
+import Post from "./post.js";
 
 const Share = sequelize.define(
-  'Share',
+  "Share",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -16,25 +16,29 @@ const Share = sequelize.define(
       allowNull: false,
       references: {
         model: Post,
-        key: 'id',
+        key: "id",
       },
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     },
     tutorId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: Tutor,
-        key: 'id',
+        key: "id",
       },
+      onDelete: "CASCADE", // Exclui compartilhamentos ao excluir o tutor
+      onUpdate: "CASCADE",
     },
   },
   {
-    tableName: 'shares',
+    tableName: "shares",
     timestamps: true,
   }
 );
 
-Share.belongsTo(Tutor, { foreignKey: 'tutorId', as: 'tutor' });
-Share.belongsTo(Post, { foreignKey: 'postId', as: 'post' });
+Share.belongsTo(Tutor, { foreignKey: "tutorId", as: "tutor" });
+Share.belongsTo(Post, { foreignKey: "postId", as: "post" });
 
 export default Share;

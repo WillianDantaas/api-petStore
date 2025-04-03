@@ -6,7 +6,7 @@ import Comment from './comment.js';
 
 // Curtidas para publicações
 const PostLike = sequelize.define(
-  'PostLike',
+  "PostLike",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -18,30 +18,34 @@ const PostLike = sequelize.define(
       allowNull: false,
       references: {
         model: Post,
-        key: 'id',
+        key: "id",
       },
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     },
     tutorId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: Tutor,
-        key: 'id',
+        key: "id",
       },
+      onDelete: "CASCADE", // Exclui curtidas ao excluir o tutor
+      onUpdate: "CASCADE",
     },
   },
   {
-    tableName: 'post_likes',
+    tableName: "post_likes",
     timestamps: true,
   }
 );
 
-PostLike.belongsTo(Tutor, { foreignKey: 'tutorId', as: 'tutor' });
-PostLike.belongsTo(Post, { foreignKey: 'postId', as: 'post' });
+PostLike.belongsTo(Tutor, { foreignKey: "tutorId", as: "tutor" });
+PostLike.belongsTo(Post, { foreignKey: "postId", as: "post" });
 
 // Curtidas para comentários
 const CommentLike = sequelize.define(
-  'CommentLike',
+  "CommentLike",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -53,25 +57,29 @@ const CommentLike = sequelize.define(
       allowNull: false,
       references: {
         model: Comment,
-        key: 'id',
+        key: "id",
       },
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     },
     tutorId: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
         model: Tutor,
-        key: 'id',
+        key: "id",
       },
+      onDelete: "CASCADE", // Exclui curtidas ao excluir o tutor
+      onUpdate: "CASCADE",
     },
   },
   {
-    tableName: 'comment_likes',
+    tableName: "comment_likes",
     timestamps: true,
   }
 );
 
-CommentLike.belongsTo(Tutor, { foreignKey: 'tutorId', as: 'tutor' });
-CommentLike.belongsTo(Comment, { foreignKey: 'commentId', as: 'comment' });
+CommentLike.belongsTo(Tutor, { foreignKey: "tutorId", as: "tutor" });
+CommentLike.belongsTo(Comment, { foreignKey: "commentId", as: "comment" });
 
 export { PostLike, CommentLike };
