@@ -41,6 +41,13 @@ const Tutor = sequelize.define(
         }
       },
     },
+    profilepicture: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      validate: {
+        isUrl: true,
+      },
+    },
     contact: {
       type: DataTypes.STRING,
       allowNull: true,
