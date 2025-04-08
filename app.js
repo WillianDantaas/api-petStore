@@ -16,12 +16,16 @@ import postsRoutes from './routes/posts/postsRoutes.js'
 import petRoutes from './routes/pets/petRoutes.js';
 import alertPets from './routes/pets/alertPets.js';
 
+//FollowRoutes
+import followRouter from './routes/follow/followRoutes.js';
+
 // Pets Screen
 import vaccinationRoutes from './routes/vaccinationRoutes.js';
 import medicalHistoryRoutes from './routes/medicalHistoryRoutes.js';
 
 //Models
 import Tutor from './models/tutor.js';  // Importando o modelo Tutor
+import Follow from './models/users/follow.js';
 import Pet from './models/pet.js';  // Importando o modelo Pet
 import MedicalHistory from './models/MedicalHistory.js';
 import Vaccination from './models/Vaccination.js';
@@ -29,6 +33,9 @@ import Comment from './models/posts/comment.js';
 import Post from './models/posts/post.js';
 import { PostLike, CommentLike } from './models/posts/postLike.js';
 import Share from './models/posts/share.js';
+
+//middlewares
+import verifyToken from './middlewares/verifyToken.js';
 
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -56,20 +63,25 @@ async function syncDatabase() {
     await sequelize.authenticate();
     console.log('Conexão com o Banco de Dados estabelecida com sucesso!');
 
-    // Sincronize as tabelas na ordem correta
-    await Tutor.sync({ force: false, logging: console.log });  // Primeiro os tutores
-    await Post.sync({ force: false, logging: console.log });   // Depois as postagens (post)
-    await Share.sync({ force: false, logging: console.log });  // Depois as compartilhadas
+    // Primeiro, sincronize os modelos independentes ou de base:
+    await Tutor.sync({ force: false, logging: console.log });  // Tabela de tutores
+    await Follow.sync({ force: false, logging: console.log });   // Tabela de follows, depende de Tutor
 
-    await Pet.sync({ force: false, logging: console.log });  // Pets
-    await MedicalHistory.sync({ force: false, logging: console.log });  // Histórico médico
-    await Vaccination.sync({ force: false, logging: console.log });  // Vacinas
+    // Depois, os modelos de posts, que dependem de Tutor:
+    await Post.sync({ force: false, logging: console.log });
+    await Share.sync({ force: false, logging: console.log });
 
-    // Só depois as tabelas que dependem de outras (comentários, curtidas)
-    await Comment.sync({ force: false, logging: console.log });  // Comentários
-    await PostLike.sync({ force: false, logging: console.log });  // Curtidas de posts
-    await CommentLike.sync({ force: false, logging: console.log });  // Curtidas de comentários
-    
+    // Em seguida, os modelos relacionados a pets:
+    await Pet.sync({ force: false, logging: console.log });
+    await MedicalHistory.sync({ force: false, logging: console.log });
+    await Vaccination.sync({ force: false, logging: console.log });
+
+    // Por fim, as tabelas dependentes de outras (por exemplo, comentários e curtidas)
+    await Comment.sync({ force: false, logging: console.log });
+    await PostLike.sync({ force: false, logging: console.log });
+    await CommentLike.sync({ force: false, logging: console.log });
+
+
     console.log('Tabelas criadas ou sincronizadas com sucesso!');
   } catch (error) {
     console.error('Erro ao conectar ou sincronizar o banco de dados:', error.message);
@@ -108,5 +120,8 @@ app.use('', medicalHistoryRoutes);
 
 // Posts
 app.use('/api/posts', postsRoutes);
+
+//Follow
+app.use('/api/follow', verifyToken, followRouter)
 
 startServer();

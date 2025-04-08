@@ -117,3 +117,5 @@ Copiar código
 <p>O link de redefinição de senha não é mais válido.</p>
 <p><a href="/forgot-password">Clique aqui</a> para solicitar um novo link.</p>
 Essa abordagem garante segurança e proporciona uma experiência amigável para o usuário.
+
+

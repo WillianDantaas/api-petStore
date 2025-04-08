@@ -230,4 +230,21 @@ Tutor.prototype.isResetPasswordLocked = function () {
   return false;
 };
 
+Tutor.associate = (models) => {
+  Tutor.belongsToMany(models.Tutor, {
+    through: models.Follow,
+    as: 'seguindo',
+    foreignKey: 'followerId',
+    otherKey: 'followingId',
+  });
+
+  Tutor.belongsToMany(models.Tutor, {
+    through: models.Follow,
+    as: 'seguidores',
+    foreignKey: 'followingId',
+    otherKey: 'followerId',
+  });
+};
+
+
 export default Tutor;

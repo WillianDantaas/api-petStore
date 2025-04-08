@@ -6,14 +6,27 @@ import Post from "./posts/post.js";
 import Comment from "./posts/comment.js";
 import { PostLike, CommentLike } from "./posts/postLike.js";
 import Share from "./posts/share.js";
+import Follow from "./users/follow.js";
 
-// Definindo associações
+// Agrupar os models em um objeto
+const models = {
+  Tutor,
+  Pet,
+  MedicalHistory,
+  Vaccination,
+  Post,
+  Comment,
+  PostLike,
+  CommentLike,
+  Share,
+  Follow
+};
 
 // Tutor - Pet
 Tutor.hasMany(Pet, { foreignKey: "tutorId", as: "pets", onDelete: "CASCADE", onUpdate: "CASCADE" });
 Pet.belongsTo(Tutor, { foreignKey: "tutorId", as: "tutor" });
 
-// Pet - MedicalHistory & Vaccination (caso deseje, mas agora o foco é em tutor)
+// Pet - MedicalHistory & Vaccination
 Pet.hasMany(MedicalHistory, { foreignKey: "petId", as: "medicalHistories", onDelete: "CASCADE", onUpdate: "CASCADE" });
 MedicalHistory.belongsTo(Pet, { foreignKey: "petId", as: "pet" });
 
@@ -56,14 +69,29 @@ Share.belongsTo(Tutor, { foreignKey: "tutorId", as: "tutor" });
 Post.hasMany(Share, { foreignKey: "postId", as: "shares", onDelete: "CASCADE", onUpdate: "CASCADE" });
 Share.belongsTo(Post, { foreignKey: "postId", as: "post" });
 
-export {
-    Tutor,
-    Pet,
-    MedicalHistory,
-    Vaccination,
-    Post,
-    Comment,
-    PostLike,
-    CommentLike,
-    Share,
-};
+// Tutor - Follow (seguidores e seguindo)
+Tutor.belongsToMany(Tutor, {
+  through: Follow,
+  as: 'seguindo',
+  foreignKey: 'followerId',
+  otherKey: 'followingId',
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+Tutor.belongsToMany(Tutor, {
+  through: Follow,
+  as: 'seguidores',
+  foreignKey: 'followingId',
+  otherKey: 'followerId',
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
+});
+
+// 🔁 Executar o associate se existir
+Object.values(models).forEach((model) => {
+  if (typeof model.associate === 'function') {
+    model.associate(models);
+  }
+});
+
+export default models;
