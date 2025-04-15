@@ -47,7 +47,7 @@ const postsController = {
   async getPosts(req, res) {
     try {
       const posts = await Post.findAll({
-        include: { model: Tutor, as: 'tutor', attributes: ['id', 'name', 'email'] },
+        include: { model: Tutor, as: 'tutor', attributes: ['id', 'name', 'profilepicture'] },
         order: [['createdAt', 'DESC']], // Ordena do mais recente para o mais antigo
       });
 
