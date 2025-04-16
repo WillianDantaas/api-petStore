@@ -1,9 +1,6 @@
 import express from 'express'
 import path from 'path';
 
-// middlewares
-import verifyToken from '../../middlewares/verifyToken.js';
-
 // Table
 import Tutor from '../../models/tutor.js';
 import Pet from '../../models/pet.js';
@@ -16,7 +13,7 @@ const alertPets = express.Router()
  * POST /lost/:petId
  * Informa o desaparecimento do Pet
  */
-alertPets.post('/alert/lost/:petId', verifyToken, async (req, res) => {
+alertPets.post('/alert/lost/:petId', async (req, res) => {
     const { petId } = req.params;
     const { latitude, longitude } = req.body;
 
@@ -58,7 +55,7 @@ alertPets.post('/alert/lost/:petId', verifyToken, async (req, res) => {
  * @route PATCH /pets/alert/found/:petId
  * @desc  Marca o pet como encontrado, desativando o alerta perdido
  */
-alertPets.patch('/alert/found/:petId', verifyToken, async (req, res) => {
+alertPets.patch('/alert/found/:petId', async (req, res) => {
     const { petId } = req.params;
   
     try {
@@ -97,7 +94,7 @@ alertPets.patch('/alert/found/:petId', verifyToken, async (req, res) => {
  * GET alert//lost
  * Rota para buscar pets perdidos com distância calculada de 2km
  */
-alertPets.get('/alert/lost', verifyToken, async (req, res) => {
+alertPets.get('/alert/lost', async (req, res) => {
     const { user_latitude, user_longitude, max_distance = 2000 } = req.query;
     // max_distance em METROS (padrão: 2000 m = 2 km)
   

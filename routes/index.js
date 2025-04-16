@@ -1,14 +1,14 @@
 import express from 'express';
-import authRoutes from './authRoutes.js';
+import authRoutes from './auth/authRoutes.js';
 import passRouter from './passRouter.js';
-import tutorLocation from './tutorLocation.js';
+import tutorLocation from './user/location/tutorLocation.js';
 
 import postsRoutes from './posts/postsRoutes.js';
 import petRoutes from './pets/petRoutes.js';
 import alertPets from './pets/alertPets.js';
 
-import vaccinationRoutes from './vaccinationRoutes.js';
-import medicalHistoryRoutes from './medicalHistoryRoutes.js';
+import vaccinationRoutes from './pets/vaccination/vaccinationRoutes.js';
+import medicalHistoryRoutes from './pets/medicalHistory/medicalHistoryRoutes.js';
 
 import followRoutes from './follow/followRoutes.js';
 import verifyToken from '../middlewares/verifyToken.js';
@@ -21,23 +21,23 @@ const router = express.Router();
 router.use('/auth', authRoutes);
 
 // Recuperação de senha
-router.use('/r', passRouter);
+router.use('/r', verifyToken, passRouter);
 
 // Tutor Location
-router.use('/tutors', tutorLocation);
+router.use('/tutors', verifyToken, tutorLocation);
 
 // Pet
-router.use('', petRoutes);
-router.use('', alertPets);
+router.use('', verifyToken, petRoutes);
+router.use('', verifyToken, alertPets);
 
 // Vacinas
-router.use('', vaccinationRoutes);
+router.use('', verifyToken, vaccinationRoutes);
 
 // Histórico médico
-router.use('', medicalHistoryRoutes);
+router.use('', verifyToken, medicalHistoryRoutes);
 
 // Posts
-router.use('/api/posts', postsRoutes);
+router.use('/api/posts', verifyToken, postsRoutes);
 
 // Follow
 router.use('/api/follow', verifyToken, followRoutes);

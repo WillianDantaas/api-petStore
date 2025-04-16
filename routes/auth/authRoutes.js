@@ -1,17 +1,15 @@
 import express from 'express';
 import jwt from 'jsonwebtoken';
-import Tutor from '../models/tutor.js';
-import encryption from '../utils/encryption.js';
-import verifyToken from '../middlewares/verifyToken.js';
+import Tutor from '../../models/tutor.js';
+import encryption from '../../utils/encryption.js';
 
 //Gerar tokens
-import tokens from '../utils/tokens.js'
+import tokens from '../../utils/tokens.js'
 
 // Nodemailer
-import sendMail from '../services/sendMail.js';
-import { sendResetPassMail } from '../templates/resetPassword.js'
-import { sendConfirmMail } from '../templates/confirmMail.js'
-import { where } from 'sequelize';
+import sendMail from '../../services/sendMail.js';
+import { sendResetPassMail } from '../../templates/resetPassword.js'
+import { sendConfirmMail } from '../../templates/confirmMail.js'
 
 const authRoutes = express.Router();
 

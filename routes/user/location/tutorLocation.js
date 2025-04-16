@@ -1,7 +1,6 @@
 // routes/tutorLocation.js
 import express from 'express';
-import Tutor from '../models/tutor.js';
-import verifyToken from '../middlewares/verifyToken.js'; // Middleware para validar o token
+import Tutor from '../../../models/tutor.js';
 
 const tutorLocation = express.Router();
 
@@ -11,7 +10,7 @@ const tutorLocation = express.Router();
  * Requer: Token de autenticação.
  * Body: { latitude: <number|string>, longitude: <number|string> }
  */
-tutorLocation.put('/location', verifyToken, async (req, res) => {
+tutorLocation.put('/location', async (req, res) => {
   try {
     const tutorId = req.user.id; // Assume que o middleware de autenticação adiciona req.user
     const { latitude, longitude } = req.body;

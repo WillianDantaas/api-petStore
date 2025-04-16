@@ -1,12 +1,11 @@
 import express from 'express';
-import Vaccination from '../models/Vaccination.js';
-import Pet from '../models/pet.js';
-import verifyToken from '../middlewares/verifyToken.js';
+import Vaccination from '../../../models/Vaccination.js';
+import Pet from '../../../models/pet.js';
 
 const vaccinationRoutes = express.Router();
 
 //Registro de vacinas
-vaccinationRoutes.post('/vaccinations', verifyToken, async (req, res) => {
+vaccinationRoutes.post('/vaccinations', async (req, res) => {
     const {
       petId,
       vaccineName,
@@ -62,7 +61,7 @@ vaccinationRoutes.post('/vaccinations', verifyToken, async (req, res) => {
    * GET /vaccinations/:petId
    * Lista todas as vacinações de um pet.
    */
-  vaccinationRoutes.get('/vaccinations/:petId', verifyToken, async (req, res) => {
+  vaccinationRoutes.get('/vaccinations/:petId', async (req, res) => {
     const { petId } = req.params;
   
     try {
@@ -85,7 +84,7 @@ vaccinationRoutes.post('/vaccinations', verifyToken, async (req, res) => {
    * PUT /vaccinations/:id
    * Atualiza um registro de vacinação.
    */
-  vaccinationRoutes.put('/vaccinations/:id', verifyToken, async (req, res) => {
+  vaccinationRoutes.put('/vaccinations/:id', async (req, res) => {
     const { id } = req.params;
     const { vaccineName, dateAdministered, expirationDate, doses, notes } = req.body;
   

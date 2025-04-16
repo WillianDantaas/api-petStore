@@ -2,7 +2,6 @@ import express from 'express'
 import path from 'path';
 
 // middlewares
-import verifyToken from '../../middlewares/verifyToken.js';
 import upload from '../../middlewares/uploadMiddleware.js';
 
 // Table
@@ -16,7 +15,7 @@ import haversineDistance from '../../utils/haversineDistance.js';
 const petRoutes = express.Router()
 
 // Registrar novo Pet
-petRoutes.post('/pets', verifyToken, upload.single('image'), async (req, res) => {
+petRoutes.post('/pets', upload.single('image'), async (req, res) => {
   const {
     name,
     species,
@@ -110,7 +109,7 @@ petRoutes.post('/pets', verifyToken, upload.single('image'), async (req, res) =>
  * GET /pets
  * Retorna todos os pets do tutor autenticado, incluindo o campo "image" (caminho para a imagem).
  */
-petRoutes.get('/pets', verifyToken, async (req, res) => {
+petRoutes.get('/pets', async (req, res) => {
   try {
     const tutorId = req.user.id;
     const tutor = await Tutor.findByPk(tutorId);
@@ -126,7 +125,7 @@ petRoutes.get('/pets', verifyToken, async (req, res) => {
         // Extrai somente o nome do arquivo utilizando path.basename
         const filename = path.basename(petObj.image);
         // Constrói a URL completa para o arquivo, apontando para a rota estática /uploads
-        petObj.image = `${process.env.API_URL}/uploads/${filename}`;
+        petObj.image = `${process.env.API_URL}/uploads/images/${filename}`;
       }
       return petObj;
     });
@@ -143,7 +142,7 @@ petRoutes.get('/pets', verifyToken, async (req, res) => {
  * Atualiza os dados de um pet, inclusive sua imagem.
  * Usa o middleware de upload para processar o arquivo enviado no campo "image".
  */
-petRoutes.put('/pets/:id', verifyToken, upload.single('image'), async (req, res) => {
+petRoutes.put('/pets/:id', upload.single('image'), async (req, res) => {
   const petId = req.params.id;
   // Extraindo os dados do corpo (a imagem vem em req.file, se enviada)
   const {
@@ -197,7 +196,7 @@ petRoutes.put('/pets/:id', verifyToken, upload.single('image'), async (req, res)
  * DELETE /pets/:id
  * Exclui o cadastro do Pet
  */
-petRoutes.delete('/pets/:id', verifyToken, async (req, res) => {
+petRoutes.delete('/pets/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const pet = await Pet.findByPk(id);
@@ -216,7 +215,7 @@ petRoutes.delete('/pets/:id', verifyToken, async (req, res) => {
  * PATCH /pets/:id/death
  * Informa o falecimento do Pet
  */
-petRoutes.patch('/pets/:id/death', verifyToken, async (req, res) => {
+petRoutes.patch('/pets/:id/death', async (req, res) => {
   const { id } = req.params;
   const { deathDate } = req.body;
   
